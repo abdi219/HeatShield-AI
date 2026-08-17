@@ -30,7 +30,7 @@ interface AppState {
   
   mapStyle: 'streets' | 'satellite';
   setMapStyle: (style: 'streets' | 'satellite') => void;
-  
+
   activeHeatLayer: 'surface_temp' | 'heat_risk' | 'canopy_deficit';
   setActiveHeatLayer: (layer: 'surface_temp' | 'heat_risk' | 'canopy_deficit') => void;
 

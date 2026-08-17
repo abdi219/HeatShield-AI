@@ -1,18 +1,77 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import mapboxgl from "mapbox-gl";
 import { useAppStore } from "@/lib/store";
-import { Crosshair, MapPin, Globe, Map as MapIcon } from "lucide-react";
+import { MapPin, Globe, Map as MapIcon, RefreshCw } from "lucide-react";
 
 interface MapCanvasProps {
   onLocationSelect?: (lat: number, lng: number) => void;
 }
 
+// Crisp, Uniform 2x High-DPI Map Styles with Smooth Fade Transitions
+const MAP_STYLES: Record<string, any> = {
+  streets: {
+    version: 8,
+    sources: {
+      "carto-positron": {
+        type: "raster",
+        tiles: [
+          "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+          "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+          "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+          "https://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+        ],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: "© OpenStreetMap contributors, © CARTO",
+      },
+    },
+    layers: [
+      {
+        id: "carto-positron-layer",
+        type: "raster",
+        source: "carto-positron",
+        minzoom: 0,
+        maxzoom: 22,
+        paint: {
+          "raster-fade-duration": 300,
+        },
+      },
+    ],
+  },
+  satellite: {
+    version: 8,
+    sources: {
+      "esri-satellite": {
+        type: "raster",
+        tiles: [
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        ],
+        tileSize: 256,
+        maxzoom: 18,
+        attribution: "© Esri, Maxar, Earthstar Geographics, USDA, USGS",
+      },
+    },
+    layers: [
+      {
+        id: "esri-satellite-layer",
+        type: "raster",
+        source: "esri-satellite",
+        minzoom: 0,
+        maxzoom: 22,
+        paint: {
+          "raster-fade-duration": 300,
+        },
+      },
+    ],
+  },
+};
+
 export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const [tokenMissing, setTokenMissing] = useState(false);
+  const mapRef = useRef<any>(null);
+  const maplibreRef = useRef<any>(null);
+  const [isLoadingGrid, setIsLoadingGrid] = useState(false);
 
   const {
     viewport,
@@ -23,72 +82,172 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
   } = useAppStore();
 
   useEffect(() => {
-    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-    if (!token || token.includes("your_mapbox") || token.length < 15) {
-      setTokenMissing(true);
-      return;
-    }
+    let isMounted = true;
 
-    try {
-      mapboxgl.accessToken = token;
+    const initMap = async () => {
       if (!mapContainerRef.current) return;
 
-      const styleUrl = mapStyle === 'satellite' 
-        ? "mapbox://styles/mapbox/satellite-streets-v12"
-        : "mapbox://styles/mapbox/light-v11";
+      try {
+        const module = await import("maplibre-gl");
+        const maplibregl = module.default || module;
+        maplibreRef.current = maplibregl;
 
-      const map = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: styleUrl,
-        center: [viewport.lng, viewport.lat],
-        zoom: viewport.zoom,
-        pitch: viewport.pitch,
-        bearing: viewport.bearing,
-        attributionControl: false,
-      });
+        if (!isMounted || !mapContainerRef.current) return;
 
-      map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "bottom-right");
+        const targetStyle = mapStyle === "satellite" ? MAP_STYLES.satellite : MAP_STYLES.streets;
 
-      map.on("moveend", () => {
-        const center = map.getCenter();
-        setViewport({
-          lat: center.lat,
-          lng: center.lng,
-          zoom: map.getZoom(),
-          pitch: map.getPitch(),
-          bearing: map.getBearing(),
+        const map = new maplibregl.Map({
+          container: mapContainerRef.current,
+          style: targetStyle,
+          center: [viewport.lng, viewport.lat],
+          zoom: viewport.zoom,
+          minZoom: 3,
+          maxZoom: 19,
+          fadeDuration: 300,
+          pitch: 0,
+          bearing: 0,
+          attributionControl: false,
         });
-      });
 
-      map.on("click", (e) => {
-        if (onLocationSelect) {
-          onLocationSelect(e.lngLat.lat, e.lngLat.lng);
-        }
-      });
+        map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
 
-      mapRef.current = map;
+        map.on("load", () => {
+          map.resize();
+          loadHeatGridLayer(map);
+        });
 
-      return () => {
-        map.remove();
+        setTimeout(() => {
+          if (map) map.resize();
+        }, 150);
+
+        map.on("moveend", () => {
+          const center = map.getCenter();
+          setViewport({
+            lat: center.lat,
+            lng: center.lng,
+            zoom: map.getZoom(),
+          });
+          loadHeatGridLayer(map);
+        });
+
+        map.on("click", (e: any) => {
+          if (onLocationSelect) {
+            onLocationSelect(e.lngLat.lat, e.lngLat.lng);
+          }
+        });
+
+        mapRef.current = map;
+      } catch (err) {
+        console.error("Map initialization error:", err);
+      }
+    };
+
+    initMap();
+
+    return () => {
+      isMounted = false;
+      if (mapRef.current) {
+        mapRef.current.remove();
         mapRef.current = null;
-      };
-    } catch (err) {
-      console.warn("Mapbox initialization:", err);
-      setTokenMissing(true);
-    }
+      }
+    };
   }, []);
 
-  // Handle dynamic map style switching (Standard Light Vector vs Satellite Aerial)
+  // Fetch FortyGuard Thermal Grid and Overlay on Canvas
+  const loadHeatGridLayer = async (mapInstance: any) => {
+    if (!mapInstance) return;
+
+    const bounds = mapInstance.getBounds();
+    if (!bounds) return;
+
+    const swLat = bounds.getSouth();
+    const swLng = bounds.getWest();
+    const neLat = bounds.getNorth();
+    const neLng = bounds.getEast();
+
+    try {
+      setIsLoadingGrid(true);
+      const res = await fetch(
+        `/api/heat/grid?swLat=${swLat.toFixed(4)}&swLng=${swLng.toFixed(4)}&neLat=${neLat.toFixed(4)}&neLng=${neLng.toFixed(4)}`
+      );
+
+      if (!res.ok) throw new Error("Failed to fetch heat grid");
+      const geojson = await res.json();
+
+      const sourceId = "fortyguard-heat-source";
+      const layerId = "fortyguard-heat-layer";
+
+      if (mapInstance.getSource(sourceId)) {
+        mapInstance.getSource(sourceId).setData(geojson);
+      } else {
+        mapInstance.addSource(sourceId, {
+          type: "geojson",
+          data: geojson,
+        });
+
+        mapInstance.addLayer({
+          id: layerId,
+          type: "circle",
+          source: sourceId,
+          paint: {
+            "circle-radius": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              12, 10,
+              15, 24,
+              18, 48
+            ],
+            "circle-color": [
+              "interpolate",
+              ["linear"],
+              ["get", "surfaceTemp"],
+              24, "#0284C7",
+              30, "#0D9488",
+              34, "#D97706",
+              38, "#EA580C",
+              42, "#DC2626",
+              46, "#991B1B"
+            ],
+            "circle-opacity": 0.45,
+            "circle-blur": 0.6,
+            "circle-stroke-width": 1.5,
+            "circle-stroke-color": [
+              "interpolate",
+              ["linear"],
+              ["get", "surfaceTemp"],
+              24, "#0284C7",
+              30, "#0D9488",
+              34, "#D97706",
+              38, "#EA580C",
+              42, "#DC2626"
+            ],
+            "circle-stroke-opacity": 0.65,
+          },
+        });
+      }
+    } catch (error) {
+      console.warn("Could not refresh heat grid overlay:", error);
+    } finally {
+      setIsLoadingGrid(false);
+    }
+  };
+
+  // Handle Dynamic Map Style Switching (Street vs Satellite)
   useEffect(() => {
     if (mapRef.current) {
-      const styleUrl = mapStyle === 'satellite'
-        ? "mapbox://styles/mapbox/satellite-streets-v12"
-        : "mapbox://styles/mapbox/light-v11";
-      mapRef.current.setStyle(styleUrl);
+      const targetStyle = mapStyle === "satellite" ? MAP_STYLES.satellite : MAP_STYLES.streets;
+      mapRef.current.setStyle(targetStyle);
+      mapRef.current.once("style.load", () => {
+        if (mapRef.current) {
+          mapRef.current.resize();
+          loadHeatGridLayer(mapRef.current);
+        }
+      });
     }
   }, [mapStyle]);
 
-  // Handle external viewport updates (e.g. city selector)
+  // Handle Viewport FlyTo upon City Selection
   useEffect(() => {
     if (mapRef.current) {
       const currentCenter = mapRef.current.getCenter();
@@ -104,96 +263,68 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     }
   }, [viewport.lat, viewport.lng, viewport.zoom]);
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const xRatio = (e.clientX - rect.left) / rect.width;
-    const yRatio = (e.clientY - rect.top) / rect.height;
-
-    const lat = viewport.lat + (0.5 - yRatio) * 0.03;
-    const lng = viewport.lng + (xRatio - 0.5) * 0.03;
-
-    if (onLocationSelect) {
-      onLocationSelect(lat, lng);
-    }
-  };
-
   return (
-    <div className="relative w-full h-full min-h-[500px] overflow-hidden bg-canvas-base select-none">
-      {/* Live Mapbox Vector / Satellite Container */}
-      <div ref={mapContainerRef} className="w-full h-full absolute inset-0" />
+    <div className="relative w-full h-full overflow-hidden bg-slate-100 select-none">
+      {/* Fullscreen Map Canvas */}
+      <div 
+        ref={mapContainerRef} 
+        style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+      />
 
-      {/* Map Style Switcher (Top-Center Right) */}
-      <div className="absolute top-4 right-5 z-20 hidden sm:flex items-center p-1 rounded-lg panel-white space-x-1 shadow-sm">
+      {/* Map Style Switcher (Top-Right) */}
+      <div className="absolute top-4 right-5 z-20 flex items-center p-1 rounded-lg panel-white space-x-1 shadow-md">
         <button
-          onClick={() => setMapStyle('streets')}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-            mapStyle === 'streets'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-ink-secondary hover:text-ink-primary hover:bg-slate-50'
+          onClick={() => setMapStyle("streets")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+            mapStyle === "streets"
+              ? "bg-slate-900 text-white shadow-sm"
+              : "text-ink-secondary hover:text-ink-primary hover:bg-slate-50"
           }`}
-          title="Switch to Clean Street Map"
         >
           <MapIcon className="w-3.5 h-3.5" />
           <span>Street Map</span>
         </button>
 
         <button
-          onClick={() => setMapStyle('satellite')}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-            mapStyle === 'satellite'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-ink-secondary hover:text-ink-primary hover:bg-slate-50'
+          onClick={() => setMapStyle("satellite")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+            mapStyle === "satellite"
+              ? "bg-slate-900 text-white shadow-sm"
+              : "text-ink-secondary hover:text-ink-primary hover:bg-slate-50"
           }`}
-          title="Switch to High-Resolution Satellite Aerial View"
         >
           <Globe className="w-3.5 h-3.5" />
           <span>Satellite Aerial</span>
         </button>
       </div>
 
-      {/* Clean Cartesian Cartography Fallback when Mapbox Token is pending */}
-      {tokenMissing && (
-        <div 
-          onClick={handleCanvasClick}
-          className="absolute inset-0 z-10 w-full h-full bg-carto-grid cursor-crosshair flex flex-col items-center justify-center p-6"
-        >
-          <div className="text-center max-w-md p-6 rounded-lg panel-white space-y-3 pointer-events-auto">
-            <div className="w-9 h-9 rounded-full bg-slate-100 border border-border-subtle flex items-center justify-center mx-auto text-slate-700">
-              <Crosshair className="w-4 h-4" />
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold text-ink-primary">Cartographic Canvas Ready</h3>
-              <p className="text-xs text-ink-secondary mt-1 leading-relaxed">
-                Click anywhere on the coordinate grid to inspect microclimate thermal exposure, or enter your Mapbox token in <code className="font-mono text-slate-800 bg-slate-100 px-1 py-0.5 rounded border border-border-subtle text-[11px]">.env.local</code> to render live vector and satellite aerial tiles.
-              </p>
-            </div>
-
-            <div className="pt-2 border-t border-border-subtle flex items-center justify-between text-[11px] font-mono text-ink-tertiary">
-              <span>Center: {viewport.lat.toFixed(4)}°N, {Math.abs(viewport.lng).toFixed(4)}°W</span>
-              <span className="text-slate-900 font-medium">Click to Inspect</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Selected Location Pin Indicator on Canvas */}
+      {/* Selected Location Pin Indicator on Map */}
       {selectedLocation && (
-        <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none flex flex-col items-center"
-        >
-          <div className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-md">
-            <MapPin className="w-3.5 h-3.5" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none flex flex-col items-center">
+          <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-lg border-2 border-white animate-bounce">
+            <MapPin className="w-4 h-4" />
           </div>
-          <div className="w-2 h-2 rounded-full bg-slate-900/30 mt-1" />
+          <div className="w-2.5 h-2.5 rounded-full bg-slate-900/40 -mt-1" />
         </div>
       )}
 
-      {/* Coordinate & Grid Status Tag (Bottom Left) */}
-      <div className="absolute bottom-5 left-5 z-20 hidden md:flex items-center gap-3 px-3 py-1.5 rounded-md panel-white text-xs text-ink-secondary font-mono">
-        <span>GRID: 25M RESOLUTION</span>
+      {/* Live Data Resolution Indicator (Bottom-Left) */}
+      <div className="absolute bottom-5 left-5 z-20 hidden md:flex items-center gap-3 px-3 py-1.5 rounded-md panel-white text-xs text-ink-secondary font-mono shadow-sm">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>FortyGuard Grid 25m</span>
+        </div>
         <span className="text-border-active">|</span>
         <span className="text-ink-primary font-medium">{viewport.lat.toFixed(4)}°N, {Math.abs(viewport.lng).toFixed(4)}°W</span>
+        {isLoadingGrid && (
+          <>
+            <span className="text-border-active">|</span>
+            <span className="flex items-center gap-1 text-slate-500">
+              <RefreshCw className="w-3 h-3 animate-spin" />
+              <span>Updating...</span>
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

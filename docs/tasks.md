@@ -60,19 +60,19 @@ Frontend (FE)  |  Backend (BE)  |  Spatial/Math (SP)  |  Docs/Design (DD)
 
 ### Milestone 2: FortyGuard Integration & Spatial Data Engine (Days 3–4)
 
-- [ ] **TASK-2.1: FortyGuard API Client & Resilient Proxy Layer** `[P1]` `[BE]`
+- [x] **TASK-2.1: FortyGuard API Client & Resilient Proxy Layer** `[P1]` `[BE]`
   - Build backend proxy route `/api/heat/points` and `/api/heat/grid` to encapsulate private FortyGuard credentials.
   - Implement HTTP request caching (in-memory LRU / SWR caching) to prevent external rate-limit exhaustion during judging.
   - Create a realistic high-fidelity FortyGuard Mock Generator fallback mode for continuous offline development and test coverage outside supported coordinates.
   - *Acceptance Criteria:* API returns structured GeoJSON feature collections with surface temperature, ambient temperature, humidity, and timestamp metadata.
 
-- [ ] **TASK-2.2: Heat Risk Score (HRS) Mathematical Engine** `[P1]` `[SP]`
+- [x] **TASK-2.2: Heat Risk Score (HRS) Mathematical Engine** `[P1]` `[SP]`
   - Formulate deterministic algorithm for Location-Level Heat Risk (0–100):
     $$HRS = w_1 \cdot \text{TempNorm} + w_2 \cdot \text{Anomaly} + w_3 \cdot \text{BuiltFactor} + w_4 \cdot \text{SolarIndex}$$
   - Implement unit tests covering extreme cold, baseline, moderate, high, and extreme heat conditions.
   - *Acceptance Criteria:* Score outputs are consistent, bounded in $[0, 100]$, and fully documented in code.
 
-- [ ] **TASK-2.3: Spatial Point-to-Grid Interpolation & GeoJSON Generation** `[P1]` `[SP]`
+- [x] **TASK-2.3: Spatial Point-to-Grid Interpolation & GeoJSON Generation** `[P1]` `[SP]`
   - Implement spatial indexing (KD-Tree / Turf.js / PostGIS) to query temperature points nearest to any coordinate in $<10\text{ms}$.
   - Generate dynamic GeoJSON contour/heat surface layers for visual map rendering.
   - *Acceptance Criteria:* Fast spatial queries $(<15\text{ms})$ over a 10,000-point microclimate dataset.

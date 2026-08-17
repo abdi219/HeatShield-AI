@@ -1,4 +1,4 @@
-@import "mapbox-gl/dist/mapbox-gl.css";
+@import "maplibre-gl/dist/maplibre-gl.css";
 
 @tailwind base;
 @tailwind components;
@@ -59,8 +59,8 @@ body {
   background: #94A3B8;
 }
 
-/* Clean Mapbox Controls Override for Light Theme */
-.mapboxgl-ctrl-group {
+/* Clean Map Navigation Controls Override */
+.maplibregl-ctrl-group {
   background: #FFFFFF !important;
   border: 1px solid #E2E8F0 !important;
   border-radius: 8px !important;
@@ -68,19 +68,18 @@ body {
   overflow: hidden;
 }
 
-.mapboxgl-ctrl-group button {
+.maplibregl-ctrl-group button {
   border-bottom: 1px solid #F1F5F9 !important;
 }
 
-.mapboxgl-ctrl-group button:last-child {
+.maplibregl-ctrl-group button:last-child {
   border-bottom: none !important;
 }
 
-.mapboxgl-ctrl-icon {
-  filter: none !important;
+.maplibregl-ctrl-icon {
   opacity: 0.7;
 }
 
-.mapboxgl-ctrl-icon:hover {
+.maplibregl-ctrl-icon:hover {
   opacity: 1;
 }

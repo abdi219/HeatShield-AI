@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { CITY_PRESETS } from "@/lib/constants";
 import { 
@@ -9,7 +9,9 @@ import {
   Sparkles, 
   BookOpen, 
   Bot, 
-  ChevronDown
+  ChevronDown,
+  Search,
+  Loader2
 } from "lucide-react";
 
 export const TopNav: React.FC = () => {
@@ -23,6 +25,9 @@ export const TopNav: React.FC = () => {
     setIsAIAssistantOpen,
   } = useAppStore();
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+
   const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selected = CITY_PRESETS.find((c) => c.name === e.target.value);
     if (selected) {
@@ -34,9 +39,35 @@ export const TopNav: React.FC = () => {
     }
   };
 
+  const handleSearchSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    try {
+      setIsSearching(true);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`
+      );
+      const data = await res.json();
+
+      if (data && data.length > 0) {
+        setViewport({
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon),
+          zoom: 15,
+        });
+        setSearchQuery("");
+      }
+    } catch (err) {
+      console.warn("Geocoding search error:", err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <header className="h-14 px-5 bg-white border-b border-border-subtle flex items-center justify-between z-30 shadow-card">
-      {/* Brand & Technical Subtitle */}
+      {/* Brand & Identity */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded bg-slate-900 flex items-center justify-center text-white font-mono text-xs font-bold">
@@ -50,11 +81,21 @@ export const TopNav: React.FC = () => {
           </span>
         </div>
 
-        <div className="hidden lg:flex items-center gap-2 text-xs text-ink-tertiary border-l border-border-subtle pl-4 font-mono">
-          <span>FortyGuard Spatial Data</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-          <span>25m Street Grid</span>
-        </div>
+        {/* Global Geographic Search Bar */}
+        <form onSubmit={handleSearchSubmit} className="hidden xl:flex items-center relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search address, neighborhood, or city..."
+            className="w-72 h-8 pl-8 pr-3 bg-canvas-subtle border border-border-subtle hover:border-border-active rounded-md text-xs text-ink-primary placeholder:text-ink-faded focus:outline-none focus:ring-1 focus:ring-slate-400 transition-all"
+          />
+          {isSearching ? (
+            <Loader2 className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 animate-spin" />
+          ) : (
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5" />
+          )}
+        </form>
       </div>
 
       {/* Structured Segmented Navigation */}
