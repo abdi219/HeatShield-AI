@@ -45,6 +45,16 @@ export interface RouteThermalSample {
   isShaded: boolean;
 }
 
+export interface RouteStep {
+  instruction: string;
+  streetName: string;
+  distanceMeters: number;
+  durationSeconds: number;
+  avgTempCelsius: number;
+  isShaded: boolean;
+  heatAdvisory: string;
+}
+
 export interface AnalyzedRoute {
   id: string;
   type: 'fastest' | 'cool_recommended';
@@ -60,6 +70,7 @@ export interface AnalyzedRoute {
     coordinates: [number, number][]; // [lng, lat]
   };
   thermalProfile: RouteThermalSample[];
+  steps: RouteStep[];
   summaryAdvisory: string;
 }
 
@@ -100,23 +111,12 @@ export interface AIChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
-  contextRef?: {
-    locationName?: string;
-    temperature?: number;
-    routeComparison?: string;
+  groundedLocationContext?: {
+    lat: number;
+    lng: number;
+    surfaceTemp: number;
+    heatRiskScore: number;
   };
-}
-
-export interface SavedLocation {
-  id: string;
-  userId?: string;
-  locationName: string;
-  address?: string;
-  latitude: number;
-  longitude: number;
-  alertThresholdCelsius?: number;
-  isAlertEnabled: boolean;
-  createdAt: string;
 }
 
 export interface CityPreset {
@@ -126,4 +126,11 @@ export interface CityPreset {
   lng: number;
   zoom: number;
   description: string;
+}
+
+export interface LayerVisibilityState {
+  surfaceHeat: boolean;
+  heatRiskScore: boolean;
+  canopyDeficit: boolean;
+  satelliteOverlay: boolean;
 }

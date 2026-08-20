@@ -18,6 +18,18 @@ interface AppState {
   temperatureUnit: TemperatureUnit;
   toggleTemperatureUnit: () => void;
 
+  // Active City Selector State
+  selectedCity: string;
+  setSelectedCity: (city: string) => void;
+
+  // Toast / Pilot Zone Alerts
+  toastAlert: {
+    message: string;
+    type?: 'warning' | 'info' | 'success';
+    searchedQuery?: string;
+  } | null;
+  setToastAlert: (alert: AppState['toastAlert']) => void;
+
   // Spatial & Map State
   viewport: {
     lat: number;
@@ -30,6 +42,11 @@ interface AppState {
   
   mapStyle: 'streets' | 'satellite';
   setMapStyle: (style: 'streets' | 'satellite') => void;
+
+  // Thermal Heatmap Visibility Toggle
+  isHeatmapVisible: boolean;
+  setIsHeatmapVisible: (visible: boolean) => void;
+  toggleHeatmapVisibility: () => void;
 
   activeHeatLayer: 'surface_temp' | 'heat_risk' | 'canopy_deficit';
   setActiveHeatLayer: (layer: 'surface_temp' | 'heat_risk' | 'canopy_deficit') => void;
@@ -49,9 +66,13 @@ interface AppState {
   origin: { name: string; lat: number; lng: number } | null;
   destination: { name: string; lat: number; lng: number } | null;
   travelMode: 'walking' | 'cycling' | 'driving';
+  selectedRouteId: 'cool' | 'fastest';
+  pointPickingMode: 'origin' | 'destination' | null;
   setOrigin: (origin: AppState['origin']) => void;
   setDestination: (destination: AppState['destination']) => void;
   setTravelMode: (mode: AppState['travelMode']) => void;
+  setSelectedRouteId: (routeId: 'cool' | 'fastest') => void;
+  setPointPickingMode: (mode: 'origin' | 'destination' | null) => void;
   
   fastestRoute: AnalyzedRoute | null;
   coolRoute: AnalyzedRoute | null;
@@ -86,12 +107,18 @@ export const useAppStore = create<AppState>((set) => ({
     temperatureUnit: state.temperatureUnit === 'celsius' ? 'fahrenheit' : 'celsius' 
   })),
 
+  selectedCity: 'Miami',
+  setSelectedCity: (selectedCity) => set({ selectedCity }),
+
+  toastAlert: null,
+  setToastAlert: (toastAlert) => set({ toastAlert }),
+
   // Viewport Defaults
   viewport: {
     lat: DEFAULT_MAP_CENTER.lat,
     lng: DEFAULT_MAP_CENTER.lng,
     zoom: DEFAULT_MAP_CENTER.zoom,
-    pitch: 30,
+    pitch: 0,
     bearing: 0,
   },
   setViewport: (newViewport) => set((state) => ({
@@ -100,6 +127,10 @@ export const useAppStore = create<AppState>((set) => ({
 
   mapStyle: 'streets',
   setMapStyle: (mapStyle) => set({ mapStyle }),
+
+  isHeatmapVisible: true,
+  setIsHeatmapVisible: (isHeatmapVisible) => set({ isHeatmapVisible }),
+  toggleHeatmapVisibility: () => set((state) => ({ isHeatmapVisible: !state.isHeatmapVisible })),
 
   activeHeatLayer: 'surface_temp',
   setActiveHeatLayer: (activeHeatLayer) => set({ activeHeatLayer }),
@@ -114,9 +145,13 @@ export const useAppStore = create<AppState>((set) => ({
   origin: null,
   destination: null,
   travelMode: 'walking',
+  selectedRouteId: 'cool',
+  pointPickingMode: null,
   setOrigin: (origin) => set({ origin }),
   setDestination: (destination) => set({ destination }),
   setTravelMode: (travelMode) => set({ travelMode }),
+  setSelectedRouteId: (selectedRouteId) => set({ selectedRouteId }),
+  setPointPickingMode: (pointPickingMode) => set({ pointPickingMode }),
   fastestRoute: null,
   coolRoute: null,
   isCalculatingRoutes: false,
@@ -138,16 +173,16 @@ export const useAppStore = create<AppState>((set) => ({
   isSimulating: false,
   setIsSimulating: (isSimulating) => set({ isSimulating }),
 
-  // AI Assistant
+  // AI Drawer
   isAIAssistantOpen: false,
   setIsAIAssistantOpen: (isAIAssistantOpen) => set({ isAIAssistantOpen }),
   aiMessages: [
     {
-      id: 'welcome-msg',
+      id: 'init-msg',
       role: 'assistant',
-      content: "Hello! I'm your HeatShield AI Assistant. Click any location on the map, compare routes, or run an urban heat mitigation simulation, and I will provide scientific, data-grounded insights.",
+      content: 'Welcome to HeatShield AI. I am your urban resilience copilot powered by FortyGuard microclimate telemetry. Click any location or analyze a cool corridor to begin.',
       timestamp: new Date().toISOString(),
-    }
+    },
   ],
   addAIMessage: (msg) => set((state) => ({ aiMessages: [...state.aiMessages, msg] })),
   isAIStreaming: false,

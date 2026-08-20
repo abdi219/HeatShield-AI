@@ -1,3 +1,4 @@
+@import "leaflet/dist/leaflet.css";
 @import "maplibre-gl/dist/maplibre-gl.css";
 
 @tailwind base;
@@ -5,81 +6,113 @@
 @tailwind utilities;
 
 :root {
-  --canvas-bg: #F8FAFC;
+  --canvas-bg: #FFFFFF;
   --text-main: #0F172A;
 }
 
 body {
   color: var(--text-main);
   background-color: var(--canvas-bg);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
 }
 
-/* Crisp Architectural Panels */
-.panel-white {
-  background-color: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
-}
-
-.panel-white-elevated {
-  background-color: #FFFFFF;
-  border: 1px solid #CBD5E1;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-}
-
-/* Subtle Coordinate Grid */
-.bg-carto-grid {
-  background-color: #F8FAFC;
-  background-image: 
-    linear-gradient(to right, #E2E8F0 1px, transparent 1px),
-    linear-gradient(to bottom, #E2E8F0 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-/* Clean Minimalist Scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #F1F5F9;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
-}
-
-/* Clean Map Navigation Controls Override */
-.maplibregl-ctrl-group {
+/* ==========================================================================
+   Street Mode — Pure Clean Architectural White
+   ========================================================================== */
+.street-card {
   background: #FFFFFF !important;
   border: 1px solid #E2E8F0 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
-  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  color: #0F172A !important;
 }
 
-.maplibregl-ctrl-group button {
-  border-bottom: 1px solid #F1F5F9 !important;
+.street-subcard {
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #0F172A !important;
 }
 
-.maplibregl-ctrl-group button:last-child {
-  border-bottom: none !important;
+/* ==========================================================================
+   Satellite Mode — Light Translucent Liquid Glass (Apple iOS Aesthetic)
+   ========================================================================== */
+.sat-glass {
+  background: rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: url(#glass-filter-_r_b_) saturate(1.3) blur(20px) !important;
+  -webkit-backdrop-filter: url(#glass-filter-_r_b_) saturate(1.3) blur(20px) !important;
+  box-shadow: 
+    inset 0 0 2px 1px rgba(255, 255, 255, 0.45),
+    inset 0 0 10px 4px rgba(255, 255, 255, 0.20),
+    inset 0 4px 16px rgba(0, 0, 0, 0.10),
+    0 12px 32px rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.38) !important;
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
 }
 
-.maplibregl-ctrl-icon {
-  opacity: 0.7;
+/* Subcards in satellite view */
+.sat-subglass {
+  background: rgba(255, 255, 255, 0.10) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.30) !important;
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
 }
 
-.maplibregl-ctrl-icon:hover {
-  opacity: 1;
+/* Header Liquid Glass Bar - Exact matching warm translucent liquid glass */
+.sat-glass-nav {
+  background: rgba(110, 105, 95, 0.40) !important;
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(95, 90, 80, 0.40) 100%) !important;
+  backdrop-filter: url(#glass-filter-_r_b_) saturate(1.3) blur(20px) !important;
+  -webkit-backdrop-filter: url(#glass-filter-_r_b_) saturate(1.3) blur(20px) !important;
+  box-shadow: 
+    inset 0 0 2px 1px rgba(255, 255, 255, 0.45),
+    inset 0 0 10px 4px rgba(255, 255, 255, 0.20),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.30),
+    0 4px 20px rgba(0, 0, 0, 0.30) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.38) !important;
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Radar scan beam */
+@keyframes radarSweep {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  30%  { opacity: 0.6; }
+  70%  { opacity: 0.6; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+.radar-sweep-beam {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 90px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.20) 95%,
+    rgba(255, 255, 255, 0.50) 100%
+  );
+  pointer-events: none;
+  z-index: 450;
+  animation: radarSweep 1.2s ease-in-out infinite;
+}
+
+/* Custom Scrollbars */
+.scrollbar-thin::-webkit-scrollbar        { width: 5px; height: 5px; }
+.scrollbar-thin::-webkit-scrollbar-track  { background: rgba(241, 245, 249, 0.3); }
+.scrollbar-thin::-webkit-scrollbar-thumb  { background: rgba(148, 163, 184, 0.6); border-radius: 4px; }
+
+/* Leaflet Container */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #E2E8F0;
+  font-family: inherit;
 }
