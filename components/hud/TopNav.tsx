@@ -114,7 +114,7 @@ export const TopNav: React.FC = () => {
           });
         } else {
           setToastAlert({
-            message: "FortyGuard live thermal data is currently active in pilot regions (Phoenix, Miami, Austin, Las Vegas). Please select a pilot city to explore!",
+            message: "Live microclimate thermal data is currently active in pilot regions (Phoenix, Miami, Austin, Las Vegas). Please select a pilot city to explore!",
             type: "warning",
             searchedQuery: searchQuery,
           });
@@ -147,10 +147,10 @@ export const TopNav: React.FC = () => {
   };
 
   return (
-    <header className={`h-14 px-4 sm:px-6 flex items-center justify-between z-30 transition-all duration-300 shrink-0 ${
+    <header className={`absolute top-0 left-0 right-0 w-full h-14 px-4 sm:px-6 z-[1100] flex items-center justify-between border-b transition-all duration-300 ${
       isSatellite 
         ? "sat-glass-nav" 
-        : "bg-white border-b border-slate-200 text-slate-900 shadow-sm"
+        : "bg-white/95 backdrop-blur-md border-slate-200 text-slate-900 shadow-sm"
     }`}>
       {/* Brand & Search Bar */}
       <div className="flex items-center gap-4 lg:gap-5 shrink-0">

@@ -41,8 +41,8 @@ body {
    ========================================================================== */
 .sat-glass {
   background: rgba(255, 255, 255, 0.16) !important;
-  backdrop-filter: url(#glass-filter-_r_b_) saturate(1.3) blur(20px) !important;
-  -webkit-backdrop-filter: url(#glass-filter-_r_b_) saturate(1.3) blur(20px) !important;
+  backdrop-filter: blur(24px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
   box-shadow: 
     inset 0 0 2px 1px rgba(255, 255, 255, 0.45),
     inset 0 0 10px 4px rgba(255, 255, 255, 0.20),
@@ -64,17 +64,15 @@ body {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
 }
 
-/* Header Liquid Glass Bar - Exact matching warm translucent liquid glass */
+/* Header Liquid Glass Bar - Matches light translucent liquid glass containers */
 .sat-glass-nav {
-  background: rgba(110, 105, 95, 0.40) !important;
-  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(95, 90, 80, 0.40) 100%) !important;
-  backdrop-filter: url(#glass-filter-_r_b_) saturate(1.3) blur(20px) !important;
-  -webkit-backdrop-filter: url(#glass-filter-_r_b_) saturate(1.3) blur(20px) !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: blur(24px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
   box-shadow: 
     inset 0 0 2px 1px rgba(255, 255, 255, 0.45),
     inset 0 0 10px 4px rgba(255, 255, 255, 0.20),
-    inset 0 -1px 2px rgba(255, 255, 255, 0.30),
-    0 4px 20px rgba(0, 0, 0, 0.30) !important;
+    0 4px 20px rgba(0, 0, 0, 0.25) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.38) !important;
   color: #FFFFFF !important;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;

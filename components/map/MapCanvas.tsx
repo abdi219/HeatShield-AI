@@ -655,7 +655,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       )}
 
       {/* Top-Right Controls: Heatmap Toggle & Map Switcher */}
-      <div className="absolute top-4 right-5 z-[1000] flex items-center gap-2.5">
+      <div className="absolute top-20 right-5 z-[1000] flex items-center gap-2.5">
         {/* Heatmap Toggle */}
         <button
           onClick={toggleHeatmapVisibility}
@@ -732,7 +732,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
         isSatellite ? "sat-glass text-white" : "street-card text-slate-900"
       }`}>
         <span className="font-bold">
-          {isHeatmapVisible ? "FortyGuard Thermal Engine" : "Base Map Mode"}
+          {isHeatmapVisible ? "Microclimate Thermal Engine" : "Base Map Mode"}
         </span>
         <span className={isSatellite ? "text-white/40" : "text-slate-300"}>|</span>
         <span className={isSatellite ? "text-white/85" : "text-slate-600"}>

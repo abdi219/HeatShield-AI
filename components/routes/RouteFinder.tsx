@@ -237,7 +237,7 @@ export function RouteFinder() {
             Cool Route Finder ({activeCity.name})
           </h3>
         </div>
-        <span className="text-[10px] font-mono text-ink-tertiary">FORTYGUARD TELEMETRY</span>
+        <span className="text-[10px] font-mono text-ink-tertiary">MICROCLIMATE TELEMETRY</span>
       </div>
 
       {/* Origin & Destination Inputs with Interactive Map Pinning */}
