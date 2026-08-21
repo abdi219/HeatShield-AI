@@ -20,7 +20,9 @@ import {
   ChevronDown,
   ChevronUp,
   Sun,
-  Flame
+  Flame,
+  RotateCcw,
+  X
 } from "lucide-react";
 
 /**
@@ -33,6 +35,10 @@ function formatSmartDuration(seconds: number): string {
 
   const hours = Math.floor(totalMinutes / 60);
   const remainingMins = totalMinutes % 60;
+  if (hours < 24) {
+    return remainingMins > 0 ? `${hours}h ${remainingMins}m` : `${hours}h`;
+  }
+
   const days = Math.floor(hours / 24);
   const remainingHours = hours % 24;
   return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
@@ -64,6 +70,7 @@ export function RouteFinder() {
     selectedRouteId,
     setSelectedRouteId,
     setRoutes,
+    clearRoutes,
     isCalculatingRoutes,
     setIsCalculatingRoutes,
     temperatureUnit,
@@ -96,18 +103,30 @@ export function RouteFinder() {
   const [destText, setDestText] = useState(destination?.name || "");
   const [isDirectionsExpanded, setIsDirectionsExpanded] = useState(true);
 
-  // Synchronize local input state whenever store coordinates are placed/updated
+  // Synchronize local input state whenever store coordinates are placed/updated/cleared
   useEffect(() => {
     if (origin?.name) {
       setOriginText(origin.name);
+    } else if (!origin) {
+      setOriginText("");
     }
-  }, [origin?.name]);
+  }, [origin]);
 
   useEffect(() => {
     if (destination?.name) {
       setDestText(destination.name);
+    } else if (!destination) {
+      setDestText("");
     }
-  }, [destination?.name]);
+  }, [destination]);
+
+  const handleClearRoute = () => {
+    clearRoutes();
+    setOriginText("");
+    setDestText("");
+  };
+
+  const hasActiveRoute = Boolean(fastestRoute || coolRoute || origin || destination);
 
   const unitSymbol = temperatureUnit === "celsius" ? "°C" : "°F";
 
@@ -286,11 +305,28 @@ export function RouteFinder() {
             Cool Route Finder ({activeCity.name})
           </h3>
         </div>
-        <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full border ${
-          isSatellite ? "bg-white/20 text-white border-white/40" : "bg-slate-100 text-slate-700 border-slate-200"
-        }`}>
-          MICROCLIMATE TELEMETRY
-        </span>
+        <div className="flex items-center gap-1.5">
+          {hasActiveRoute && (
+            <button
+              type="button"
+              onClick={handleClearRoute}
+              className={`px-2 py-0.5 rounded-lg text-[11px] font-bold flex items-center gap-1 border transition-all ${
+                isSatellite 
+                  ? "bg-white/20 hover:bg-white/30 text-white border-white/40" 
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+              }`}
+              title="Clear active route & reset map"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Clear</span>
+            </button>
+          )}
+          <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full border ${
+            isSatellite ? "bg-white/20 text-white border-white/40" : "bg-slate-100 text-slate-700 border-slate-200"
+          }`}>
+            MICROCLIMATE
+          </span>
+        </div>
       </div>
 
       {/* Origin & Destination Inputs with Interactive Map Pinning */}
@@ -413,29 +449,47 @@ export function RouteFinder() {
         })}
       </div>
 
-      {/* Action Button: Compare Heat Exposure */}
-      <button
-        type="button"
-        onClick={() => handleCalculateRoutes()}
-        disabled={isCalculatingRoutes || (!originText.trim() && !origin) || (!destText.trim() && !destination)}
-        className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md ${
-          isSatellite
-            ? "bg-white hover:bg-white/90 text-slate-950 font-extrabold shadow-lg"
-            : "bg-slate-900 hover:bg-slate-800 text-white"
-        } disabled:opacity-40 disabled:cursor-not-allowed`}
-      >
-        {isCalculatingRoutes ? (
-          <>
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            <span>Analyzing Microclimate Corridors...</span>
-          </>
-        ) : (
-          <>
-            <span>Compare Heat Exposure</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </>
+      {/* Action Buttons: Compare Heat Exposure & Reset */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => handleCalculateRoutes()}
+          disabled={isCalculatingRoutes || (!originText.trim() && !origin) || (!destText.trim() && !destination)}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md ${
+            isSatellite
+              ? "bg-white hover:bg-white/90 text-slate-950 font-extrabold shadow-lg"
+              : "bg-slate-900 hover:bg-slate-800 text-white"
+          } disabled:opacity-40 disabled:cursor-not-allowed`}
+        >
+          {isCalculatingRoutes ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Analyzing Corridors...</span>
+            </>
+          ) : (
+            <>
+              <span>Compare Heat Exposure</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </>
+          )}
+        </button>
+
+        {hasActiveRoute && (
+          <button
+            type="button"
+            onClick={handleClearRoute}
+            className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 shrink-0 ${
+              isSatellite
+                ? "bg-white/15 hover:bg-white/25 text-white border-white/35"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+            }`}
+            title="Clear active route & reset map"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset</span>
+          </button>
         )}
-      </button>
+      </div>
 
       {/* Quick Verified City Corridors */}
       <div className="space-y-1.5 pt-1">
@@ -508,9 +562,25 @@ export function RouteFinder() {
                   <span>Peak Heat:</span>
                   <span className="text-red-500 font-bold">{formatTemp(fastestRoute.peakTempCelsius)}{unitSymbol}</span>
                 </div>
-                <div className="flex justify-between text-amber-500 pt-0.5 font-bold">
-                  <span>Exposure:</span>
-                  <span>High Heat</span>
+                <div className="flex justify-between pt-0.5 font-bold">
+                  <span className={textSecondary}>Exposure:</span>
+                  <span className={
+                    fastestRoute.averageTempCelsius < 27 
+                      ? "text-emerald-400" 
+                      : fastestRoute.averageTempCelsius < 33 
+                      ? "text-teal-400" 
+                      : fastestRoute.averageTempCelsius < 38 
+                      ? "text-amber-400" 
+                      : "text-red-400"
+                  }>
+                    {fastestRoute.averageTempCelsius < 27 
+                      ? "Low Heat" 
+                      : fastestRoute.averageTempCelsius < 33 
+                      ? "Moderate" 
+                      : fastestRoute.averageTempCelsius < 38 
+                      ? "Elevated" 
+                      : "High Heat"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -525,7 +595,7 @@ export function RouteFinder() {
               }`}
             >
               <div className="flex items-center justify-between text-[10px] font-mono font-bold text-emerald-400">
-                <span>RECOMMENDED</span>
+                <span>{(fastestRoute.averageTempCelsius - coolRoute.averageTempCelsius) >= 0.5 ? "RECOMMENDED" : "ALTERNATE"}</span>
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               </div>
 
@@ -559,19 +629,35 @@ export function RouteFinder() {
           </div>
 
           {/* Differential Exposure Summary Banner */}
-          <div className={`p-2.5 rounded-xl border flex items-center justify-between ${
-            isSatellite ? "bg-emerald-500/25 border-emerald-400/50 text-white" : "bg-emerald-50 border-emerald-200 text-emerald-950"
-          }`}>
-            <div className="flex items-center gap-2">
-              <Trees className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="font-bold text-[11px]">
-                {coolRoute.exposureReductionPct}% Less Heat Exposure
+          {coolRoute.exposureReductionPct > 0 && (fastestRoute.averageTempCelsius - coolRoute.averageTempCelsius) >= 0.5 ? (
+            <div className={`p-2.5 rounded-xl border flex items-center justify-between ${
+              isSatellite ? "bg-emerald-500/25 border-emerald-400/50 text-white" : "bg-emerald-50 border-emerald-200 text-emerald-950"
+            }`}>
+              <div className="flex items-center gap-2">
+                <Trees className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="font-bold text-[11px]">
+                  {coolRoute.exposureReductionPct}% Less Heat Exposure
+                </span>
+              </div>
+              <span className="text-[10px] font-mono font-bold text-emerald-300">
+                -{formatDeltaTemp(fastestRoute.averageTempCelsius - coolRoute.averageTempCelsius)}{unitSymbol} Cooler
               </span>
             </div>
-            <span className="text-[10px] font-mono font-bold text-emerald-300">
-              -{formatDeltaTemp(fastestRoute.averageTempCelsius - coolRoute.averageTempCelsius)}{unitSymbol} Cooler
-            </span>
-          </div>
+          ) : (
+            <div className={`p-2.5 rounded-xl border flex items-center justify-between ${
+              isSatellite ? "bg-white/10 border-white/20 text-white" : "bg-slate-100 border-slate-200 text-slate-800"
+            }`}>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="font-bold text-[11px]">
+                  Balanced Thermal Corridor
+                </span>
+              </div>
+              <span className={`text-[10px] font-mono font-bold ${isSatellite ? "text-white/70" : "text-slate-500"}`}>
+                Both Paths Optimal
+              </span>
+            </div>
+          )}
 
           {/* Turn-by-Turn Thermal Directions */}
           {activeRoute && activeRoute.steps && activeRoute.steps.length > 0 && (

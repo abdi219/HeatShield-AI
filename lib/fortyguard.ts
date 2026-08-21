@@ -9,7 +9,7 @@ const cache = new Map<string, { data: any; expiresAt: number }>();
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache
 
 // Verified Urban Cool Landmarks & Water/Canopy Corridors for Major Presets
-const COOL_CORRIDOR_LANDMARKS = [
+export const COOL_CORRIDOR_LANDMARKS = [
   // Phoenix (Sonoran Desert):
   // Civic Space Park, Margaret T. Hance Deck Park, Encanto Park, Arizona Center Gardens, Grand Canal Linear Park
   { lat: 33.4533, lng: -112.0742, radiusKm: 0.95, coolingDeltaC: 6.8, canopyBonus: 55 },
@@ -65,61 +65,54 @@ function calculateUrbanHeatDispersion(lat: number, lng: number): {
   const utcHours = now.getUTCHours() + now.getUTCMinutes() / 60;
   const localSolarHour = (utcHours + (lng / 15) + 24) % 24;
 
-  // Calibrated Daytime Microclimate Window:
-  const diurnalAngle = ((localSolarHour - 9.5) / 24) * 2 * Math.PI;
-  const rawDiurnal = (Math.sin(diurnalAngle) + 1) / 2;
-  const diurnalFactor = Math.max(0.70, Math.min(1.0, 0.65 + rawDiurnal * 0.35));
+  // Active Diurnal Cycle (Preserves realistic day/night swing while maintaining daytime microclimate contrast)
+  const isDaytime = localSolarHour >= 6.5 && localSolarHour <= 19.5;
+  const sunPeakFactor = isDaytime 
+    ? Math.sin(((localSolarHour - 6.5) / 13.0) * Math.PI)
+    : 0.0;
+  const solarIrradiance = Math.max(0.35, Math.min(1.0, 0.35 + sunPeakFactor * 0.65));
 
-  // Direct Solar Irradiance Coupling (0.72 - 1.0 daytime solar window)
-  let solarIrradianceFactor = 0.72;
-  if (localSolarHour >= 6.0 && localSolarHour <= 20.0) {
-    const sunAngle = ((localSolarHour - 6.0) / 14.0) * Math.PI;
-    const directSun = Math.pow(Math.sin(sunAngle), 1.1);
-    solarIrradianceFactor = Math.max(0.72, Math.min(1.0, 0.68 + directSun * 0.32));
-  }
-
-  // 2. City-Specific Calibrated Ambient Boundaries [Baseline Min, Peak Afternoon]
-  let minTemp = 22.0;
-  let maxTemp = 28.5;
+  // 2. City-Specific Ambient Baseline [Cool Morning, Peak Afternoon]
+  let minTemp = 21.0;
+  let maxTemp = 27.5;
 
   if (lng < -110 && lat < 35) {
-    // Phoenix (Sonoran Desert): 23.5°C -> 30.5°C
-    minTemp = 23.5;
-    maxTemp = 30.5;
-  } else if (lat < 27) {
-    // Miami (Subtropical Coastal): 23.0°C -> 29.0°C
+    // Phoenix (Sonoran Desert): 23.0°C -> 29.5°C
     minTemp = 23.0;
-    maxTemp = 29.0;
-  } else if (lat > 33 && lng > -103 && lng < -100) {
-    // Lubbock / West Texas: 22.0°C -> 28.5°C
-    minTemp = 22.0;
+    maxTemp = 29.5;
+  } else if (lat < 27) {
+    // Miami (Subtropical Coastal): 22.5°C -> 28.5°C
+    minTemp = 22.5;
     maxTemp = 28.5;
   } else if (lat > 29 && lat < 32) {
-    // Austin (Central Texas): 22.5°C -> 29.5°C
-    minTemp = 22.5;
-    maxTemp = 29.5;
+    // Austin (Central Texas): 22.0°C -> 28.5°C
+    minTemp = 22.0;
+    maxTemp = 28.5;
   } else if (lat > 35 && lng < -114) {
-    // Las Vegas (Mojave Desert): 23.5°C -> 30.5°C
-    minTemp = 23.5;
-    maxTemp = 30.5;
-  } else {
-    // General US Baseline
-    minTemp = 21.0;
-    maxTemp = 28.0;
+    // Las Vegas (Mojave Desert): 23.0°C -> 29.5°C
+    minTemp = 23.0;
+    maxTemp = 29.5;
   }
 
-  const regionalAmbient = minTemp + (maxTemp - minTemp) * (diurnalFactor * 0.7);
+  const regionalAmbient = minTemp + (maxTemp - minTemp) * (sunPeakFactor * 0.75);
 
-  // 3. Micro-scale street grid and building density
-  const scale = 240.0;
+  // 3. Multi-tier urban land-use & road network synthesis
+  // High-frequency arterial grid
+  const scale = 220.0;
   const gridX = Math.abs(Math.sin(lng * scale * Math.PI));
   const gridY = Math.abs(Math.cos(lat * scale * Math.PI));
-  const streetAsphaltFactor = Math.pow(Math.max(gridX, gridY), 2.2);
+  const rawStreet = Math.pow(Math.max(gridX, gridY), 2.8);
 
-  const macroNoise = (spatialHash(lat, lng, 1) + spatialHash(lat * 2, lng * 2, 2) * 0.5) / 1.5;
-  const urbanDensity = Math.max(0.1, Math.min(1.0, streetAsphaltFactor * 0.65 + macroNoise * 0.35));
+  // Macro-zoning noise (commercial core vs residential suburbs vs open green/water corridors)
+  const macroZone = spatialHash(lat * 0.8, lng * 0.8, 1);
+  const microVariation = spatialHash(lat * 3.5, lng * 3.5, 2);
 
-  // 4. Proximity cooling to landmark parks and water corridors
+  // Commercial / Industrial Core vs Residential Suburb
+  const isHighDensityArterial = rawStreet > 0.65;
+  const isCommercialCore = macroZone > 0.60;
+  const isResidential = !isCommercialCore && !isHighDensityArterial;
+
+  // 4. Landmark proximity cooling & water bodies
   let parkCooling = 0;
   let parkCanopyBonus = 0;
 
@@ -135,24 +128,33 @@ function calculateUrbanHeatDispersion(lat: number, lng: number): {
     }
   }
 
-  // 5. Localized canopy coverage %
-  const baseCanopy = Math.max(8, Math.min(75, (1 - urbanDensity) * 60 + parkCanopyBonus));
-  const canopyPct = Math.round(Math.min(90, baseCanopy));
+  // 5. Canopy percentage calculation
+  let baseCanopy = 28;
+  if (isResidential) baseCanopy = 42 + microVariation * 20; // 42% - 62% in residential green neighborhoods
+  else if (isCommercialCore) baseCanopy = 12 + microVariation * 10; // 12% - 22% in downtown core
+  else baseCanopy = 18 + microVariation * 12; // 18% - 30% along arterials
 
-  // 6. Physically grounded Surface Temperature:
-  // - Direct Sun Asphalt Absorption: +0.5°C to +11.0°C
-  // - Thermal Mass Retention: +0.3°C to +1.8°C
-  // - Canopy Evapotranspiration: -1.8°C to -4.5°C
-  // - Park/Water Proximity: -2.0°C to -7.8°C
-  const solarDirectHeat = (0.5 + urbanDensity * 10.5) * solarIrradianceFactor;
-  const thermalMassRetention = (0.3 + urbanDensity * 1.6) * (1 - solarIrradianceFactor * 0.3);
-  const asphaltAbsorption = solarDirectHeat + thermalMassRetention;
-  
-  const canopyCooling = (canopyPct / 100) * (1.8 + 2.6 * solarIrradianceFactor);
-  const effectiveParkCooling = parkCooling * (0.7 + 0.3 * solarIrradianceFactor);
+  const canopyPct = Math.round(Math.max(5, Math.min(92, baseCanopy + parkCanopyBonus)));
 
-  const rawSurfaceTemp = regionalAmbient + asphaltAbsorption - canopyCooling - effectiveParkCooling;
-  const surfaceTempC = Number(Math.max(18.0, Math.min(48.0, rawSurfaceTemp)).toFixed(1));
+  // 6. Calibrated Physical Heat Balance:
+  // - Unshaded Highways / Parking Lots: +8.5°C to +13.5°C -> (36°C - 42°C: Red/Purple)
+  // - Commercial / Downtown Streets: +5.0°C to +8.0°C -> (32°C - 35°C: Orange)
+  // - Residential Shaded Streets: +1.5°C to +3.5°C -> (27°C - 30°C: Emerald Teal/Amber)
+  // - Parks & Waterfronts: -1.5°C to -6.5°C below ambient -> (22°C - 25°C: Sapphire Blue)
+  let solarHeatGain = 0;
+  if (isHighDensityArterial) {
+    solarHeatGain = (7.5 + rawStreet * 6.0) * solarIrradiance;
+  } else if (isCommercialCore) {
+    solarHeatGain = (4.5 + macroZone * 4.0) * solarIrradiance;
+  } else {
+    solarHeatGain = (1.5 + microVariation * 2.5) * solarIrradiance;
+  }
+
+  const canopyEvapotranspiration = (canopyPct / 100) * (2.5 + 3.0 * solarIrradiance);
+  const effectiveParkCooling = parkCooling * (0.8 + 0.2 * solarIrradiance);
+
+  const rawSurfaceTemp = regionalAmbient + solarHeatGain - canopyEvapotranspiration - effectiveParkCooling;
+  const surfaceTempC = Number(Math.max(19.0, Math.min(46.0, rawSurfaceTemp)).toFixed(1));
   const ambientTempC = Number(regionalAmbient.toFixed(1));
 
   return { surfaceTempC, ambientTempC, canopyPct };
@@ -201,12 +203,12 @@ export function getMockHeatGrid(
   const midLat = (swLat + neLat) / 2;
   const cosLat = Math.cos((midLat * Math.PI) / 180);
   
-  // High-density 36x36 spatial grid for seamless city-wide coverage
-  const latSteps = 36;
+  // High-density 42x42 spatial grid for seamless city-wide coverage
+  const latSteps = 42;
   const stepLat = (neLat - swLat) / latSteps;
   
   const idealStepLng = stepLat / Math.max(0.15, cosLat);
-  const lngSteps = Math.max(20, Math.round((neLng - swLng) / idealStepLng));
+  const lngSteps = Math.max(26, Math.round((neLng - swLng) / idealStepLng));
   const actualStepLng = (neLng - swLng) / lngSteps;
 
   for (let i = 0; i <= latSteps; i++) {

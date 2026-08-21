@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useAppStore } from "@/lib/store";
+import { getMockHeatGrid } from "@/lib/fortyguard";
 import { Plus, Minus } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -27,6 +28,40 @@ const TILE_LAYERS = {
 
 // Client-Side Spatial Cache for 0ms Instant Zoom Switching
 const clientGridCache = new Map<string, GeoJSON.FeatureCollection>();
+
+/**
+ * Spatial feature accumulator: merges new spatial features with existing loaded points
+ * to guarantee continuous coverage without blank holes or border dropoffs.
+ */
+function mergeSpatialFeatures(
+  current: GeoJSON.Feature[],
+  incoming: GeoJSON.Feature[],
+  maxFeatures = 4000
+): GeoJSON.Feature[] {
+  const map = new Map<string, GeoJSON.Feature>();
+
+  for (let i = 0; i < current.length; i++) {
+    const f = current[i];
+    if (f.geometry.type === "Point") {
+      const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates;
+      map.set(`${lat.toFixed(4)}_${lng.toFixed(4)}`, f);
+    }
+  }
+
+  for (let i = 0; i < incoming.length; i++) {
+    const f = incoming[i];
+    if (f.geometry.type === "Point") {
+      const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates;
+      map.set(`${lat.toFixed(4)}_${lng.toFixed(4)}`, f);
+    }
+  }
+
+  const result = Array.from(map.values());
+  if (result.length > maxFeatures) {
+    return result.slice(result.length - maxFeatures);
+  }
+  return result;
+}
 
 // 256-Step Opaque Color Palette Lookup Table (LUT)
 function createGradientPalette(layerType: string): Uint8ClampedArray {
@@ -76,6 +111,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
   const isHeatmapVisibleRef = useRef<boolean>(true);
   const rawGridDataRef = useRef<GeoJSON.FeatureCollection | null>(null);
   const animFrameIdRef = useRef<number | null>(null);
+  const lastFittedRouteKeyRef = useRef<string>("");
 
   const [isLoadingGrid, setIsLoadingGrid] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(14.5);
@@ -170,11 +206,13 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     const valSum = new Float32Array(totalCells);
     const weightSum = new Float32Array(totalCells);
 
-    // Adaptive radius scaled with screen and zoom to ensure continuous coverage
-    const nodeScreenDist = Math.max(20, size.x / 30);
-    const radiusOff = Math.max(10, Math.min(26, Math.round(nodeScreenDist * scale * 1.6)));
+    // Continuous liquid field radius calculation:
+    // With 42 grid steps across the 3.0x total span (screen + 2x buffer),
+    // the distance between adjacent nodes in offscreen space is: (offWidth * 3.0) / 42.
+    const nodeDistOff = (offWidth * 3.0) / 42;
+    const radiusOff = Math.max(18, Math.round(nodeDistOff * 1.95));
     const radiusOff2 = radiusOff * radiusOff;
-    const sigma2 = 2 * (radiusOff * 0.48) * (radiusOff * 0.48);
+    const sigma2 = 2 * (radiusOff * 0.62) * (radiusOff * 0.62);
 
     const layerType = activeHeatLayerRef.current;
 
@@ -275,48 +313,28 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     requestHeatmapRedraw();
   }, [requestHeatmapRedraw]);
 
-  // Load Microclimate Grid with Wide Metropolitan Buffer
-  const loadHeatGrid = useCallback(async (map: L.Map) => {
+  // Load Microclimate Grid Dynamically for Current Viewport + 2.0x Buffer (Task 2.1)
+  const loadHeatGrid = useCallback((map: L.Map) => {
     try {
       const bounds = map.getBounds();
       const sw = bounds.getSouthWest();
       const ne = bounds.getNorthEast();
 
-      // Wide 1.2x metropolitan buffer covers entire city seamlessly
-      const latBuffer = Math.max(0.04, (ne.lat - sw.lat) * 1.2);
-      const lngBuffer = Math.max(0.04, (ne.lng - sw.lng) * 1.2);
+      const latSpan = Math.max(0.003, ne.lat - sw.lat);
+      const lngSpan = Math.max(0.003, ne.lng - sw.lng);
 
-      const swLat = Math.max(-85, sw.lat - latBuffer);
-      const swLng = Math.max(-180, sw.lng - lngBuffer);
-      const neLat = Math.min(85, ne.lat + latBuffer);
-      const neLng = Math.min(180, ne.lng + lngBuffer);
+      // Generous 2.0x buffer (100% extra padding in all 4 directions around screen)
+      const swLat = Math.max(-85, sw.lat - latSpan);
+      const swLng = Math.max(-180, sw.lng - lngSpan);
+      const neLat = Math.min(85, ne.lat + latSpan);
+      const neLng = Math.min(180, ne.lng + lngSpan);
 
-      const cacheKey = `${swLat.toFixed(3)}_${swLng.toFixed(3)}_${neLat.toFixed(3)}_${neLng.toFixed(3)}`;
-
-      // 0ms Instant Cache Hit
-      if (clientGridCache.has(cacheKey)) {
-        rawGridDataRef.current = clientGridCache.get(cacheKey)!;
-        requestHeatmapRedraw();
-        return;
-      }
-
-      setIsLoadingGrid(true);
-
-      const res = await fetch(
-        `/api/heat/grid?swLat=${swLat.toFixed(4)}&swLng=${swLng.toFixed(4)}&neLat=${neLat.toFixed(4)}&neLng=${neLng.toFixed(4)}`
-      );
-
-      if (!res.ok) return;
-      const geojson: GeoJSON.FeatureCollection = await res.json();
-      if (!geojson || !geojson.features || !geojson.features.length) return;
-
-      clientGridCache.set(cacheKey, geojson);
+      // Generate synchronous grid for the active viewport + buffer
+      const geojson = getMockHeatGrid(swLat, swLng, neLat, neLng);
       rawGridDataRef.current = geojson;
       requestHeatmapRedraw();
     } catch (err) {
       console.warn("Error rendering heat grid:", err);
-    } finally {
-      setIsLoadingGrid(false);
     }
   }, [requestHeatmapRedraw]);
 
@@ -375,15 +393,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     if (!routeGroupRef.current || !map.hasLayer(routeGroupRef.current)) {
       if (routeGroupRef.current) {
         routeGroupRef.current.clearLayers();
-        try { map.removeLayer(routeGroupRef.current); } catch {}
+        try { map.removeLayer(routeGroupRef.current); } catch { }
       }
       routeGroupRef.current = L.layerGroup().addTo(map);
     } else {
       routeGroupRef.current.clearLayers();
-    }
-
-    if (activeTab !== "routes") {
-      return;
     }
 
     // 1. Always Render Origin Pin (A) if available
@@ -481,19 +495,23 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       });
     }
 
-    // 5. Auto-Fit Camera to Entire Route Corridor
+    // 5. Auto-Fit Camera only once per newly calculated route in routes tab
     if (allRouteCoords.length > 0) {
-      const bounds = L.latLngBounds(allRouteCoords);
-      if (origin) bounds.extend([origin.lat, origin.lng]);
-      if (destination) bounds.extend([destination.lat, destination.lng]);
+      const currentRouteKey = `${origin?.lat}_${origin?.lng}_${destination?.lat}_${destination?.lng}_${fastestRoute?.durationSeconds}_${coolRoute?.durationSeconds}`;
+      if (activeTab === "routes" && currentRouteKey !== lastFittedRouteKeyRef.current) {
+        lastFittedRouteKeyRef.current = currentRouteKey;
+        const bounds = L.latLngBounds(allRouteCoords);
+        if (origin) bounds.extend([origin.lat, origin.lng]);
+        if (destination) bounds.extend([destination.lat, destination.lng]);
 
-      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-      map.fitBounds(bounds, {
-        paddingTopLeft: isMobile ? [40, 40] : [430, 80],
-        paddingBottomRight: isMobile ? [40, 40] : [60, 80],
-        maxZoom: 16,
-        animate: true,
-      });
+        const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+        map.fitBounds(bounds, {
+          paddingTopLeft: isMobile ? [40, 40] : [430, 80],
+          paddingBottomRight: isMobile ? [40, 40] : [60, 80],
+          maxZoom: 16,
+          animate: true,
+        });
+      }
     }
   }, [activeTab, fastestRoute, coolRoute, selectedRouteId, origin, destination]);
 
@@ -535,7 +553,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.pointerEvents = "none";
-    map.getPane("thermalPane")!.appendChild(canvas);
+    canvas.style.zIndex = "450";
+    map.getContainer().appendChild(canvas);
     canvasOverlayRef.current = canvas;
 
     resizeCanvas();
@@ -543,6 +562,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     map.on("move", requestHeatmapRedraw);
     map.on("zoom", () => {
       setCurrentZoom(Number(map.getZoom().toFixed(1)));
+      loadHeatGrid(map);
       requestHeatmapRedraw();
     });
     map.on("resize", resizeCanvas);
@@ -632,7 +652,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       }
       if (routeGroupRef.current) {
         routeGroupRef.current.clearLayers();
-        try { routeGroupRef.current.remove(); } catch {}
+        try { routeGroupRef.current.remove(); } catch { }
         routeGroupRef.current = null;
       }
       if (clickPinRef.current) {
@@ -667,13 +687,17 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       const curCenter = mapInstanceRef.current.getCenter();
       const dist = Math.hypot(curCenter.lat - viewport.lat, curCenter.lng - viewport.lng);
       if (dist > 0.005) {
+        if (dist > 0.8) {
+          rawGridDataRef.current = null;
+          requestHeatmapRedraw();
+        }
         mapInstanceRef.current.flyTo([viewport.lat, viewport.lng], viewport.zoom, { duration: 1.2 });
         setTimeout(() => {
           if (mapInstanceRef.current) loadHeatGrid(mapInstanceRef.current);
         }, 1300);
       }
     }
-  }, [viewport.lat, viewport.lng, viewport.zoom, loadHeatGrid]);
+  }, [viewport.lat, viewport.lng, viewport.zoom, loadHeatGrid, requestHeatmapRedraw]);
 
   // Selected Pin
   useEffect(() => {
@@ -733,17 +757,15 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       {/* Hover HUD Tooltip */}
       {hoverTelemetry && !pointPickingMode && isHeatmapVisible && (
         <div
-          className={`absolute z-[1000] pointer-events-none -translate-x-1/2 -translate-y-full flex items-center gap-2 font-mono text-xs font-bold px-3.5 py-1.5 rounded-xl shadow-xl ${
-            isSatellite ? "sat-glass text-white" : "street-card text-slate-900"
-          }`}
+          className={`absolute z-[1000] pointer-events-none -translate-x-1/2 -translate-y-full flex items-center gap-2 font-mono text-xs font-bold px-3.5 py-1.5 rounded-xl shadow-xl ${isSatellite ? "sat-glass text-white" : "street-card text-slate-900"
+            }`}
           style={{ left: `${hoverTelemetry.x}px`, top: `${hoverTelemetry.y}px` }}
         >
           <span>{formatTemp(hoverTelemetry.temp)}</span>
           <span style={{ opacity: 0.4 }}>|</span>
           <span className="text-[11px] font-semibold">HRS {hoverTelemetry.score}</span>
-          <span className={`text-[9px] font-bold uppercase px-1.5 rounded-full ${
-            hoverTelemetry.score > 80 ? "bg-red-500 text-white" : hoverTelemetry.score > 50 ? "bg-amber-500 text-white" : "bg-sky-500 text-white"
-          }`}>
+          <span className={`text-[9px] font-bold uppercase px-1.5 rounded-full ${hoverTelemetry.score > 80 ? "bg-red-500 text-white" : hoverTelemetry.score > 50 ? "bg-amber-500 text-white" : "bg-sky-500 text-white"
+            }`}>
             {hoverTelemetry.level}
           </span>
         </div>
@@ -754,37 +776,33 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
         {/* Heatmap Toggle */}
         <button
           onClick={toggleHeatmapVisibility}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-md transition-all duration-200 ${
-            isHeatmapVisible
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-md transition-all duration-200 ${isHeatmapVisible
               ? isSatellite ? "bg-white text-slate-950 font-extrabold" : "bg-slate-900 text-white"
               : isSatellite ? "sat-glass text-white" : "street-card text-slate-800"
-          }`}
+            }`}
           title="Toggle Thermal Heatmap Overlay"
         >
           {isHeatmapVisible ? "Heatmap: ON" : "Heatmap: OFF"}
         </button>
 
         {/* Street vs Satellite Switcher */}
-        <div className={`flex items-center p-1 rounded-xl shadow-md ${
-          isSatellite ? "sat-glass" : "street-card"
-        }`}>
+        <div className={`flex items-center p-1 rounded-xl shadow-md ${isSatellite ? "sat-glass" : "street-card"
+          }`}>
           <button
             onClick={() => setMapStyle("streets")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              mapStyle === "streets"
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mapStyle === "streets"
                 ? "bg-slate-900 text-white"
                 : isSatellite ? "text-white/85 hover:bg-white/20" : "text-slate-600 hover:bg-slate-100"
-            }`}
+              }`}
           >
             Street
           </button>
           <button
             onClick={() => setMapStyle("satellite")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              mapStyle === "satellite"
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mapStyle === "satellite"
                 ? "bg-white text-slate-950 font-extrabold"
                 : isSatellite ? "text-white/85 hover:bg-white/20" : "text-slate-600 hover:bg-slate-100"
-            }`}
+              }`}
           >
             Satellite
           </button>
@@ -793,39 +811,34 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
 
       {/* Zoom Controls (Bottom-Right) */}
       <div className="absolute bottom-5 right-5 z-[1000] flex flex-col items-center gap-1.5">
-        <div className={`flex flex-col overflow-hidden rounded-xl shadow-lg ${
-          isSatellite ? "sat-glass" : "street-card"
-        }`}>
+        <div className={`flex flex-col overflow-hidden rounded-xl shadow-lg ${isSatellite ? "sat-glass" : "street-card"
+          }`}>
           <button
             onClick={handleZoomIn}
-            className={`w-9 h-9 flex items-center justify-center transition-colors border-b ${
-              isSatellite ? "text-white hover:bg-white/20 border-white/20" : "text-slate-700 hover:bg-slate-100 border-slate-200"
-            }`}
+            className={`w-9 h-9 flex items-center justify-center transition-colors border-b ${isSatellite ? "text-white hover:bg-white/20 border-white/20" : "text-slate-700 hover:bg-slate-100 border-slate-200"
+              }`}
             title="Zoom In"
           >
             <Plus className="w-4 h-4" />
           </button>
           <button
             onClick={handleZoomOut}
-            className={`w-9 h-9 flex items-center justify-center transition-colors ${
-              isSatellite ? "text-white hover:bg-white/20" : "text-slate-700 hover:bg-slate-100"
-            }`}
+            className={`w-9 h-9 flex items-center justify-center transition-colors ${isSatellite ? "text-white hover:bg-white/20" : "text-slate-700 hover:bg-slate-100"
+              }`}
             title="Zoom Out"
           >
             <Minus className="w-4 h-4" />
           </button>
         </div>
-        <div className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold shadow-sm ${
-          isSatellite ? "sat-glass text-white" : "street-card text-slate-800"
-        }`}>
+        <div className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold shadow-sm ${isSatellite ? "sat-glass text-white" : "street-card text-slate-800"
+          }`}>
           {currentZoom.toFixed(1)}x
         </div>
       </div>
 
       {/* Status Bar (Bottom-Left) */}
-      <div className={`absolute bottom-5 left-5 z-[1000] hidden md:flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-mono shadow-sm ${
-        isSatellite ? "sat-glass text-white" : "street-card text-slate-900"
-      }`}>
+      <div className={`absolute bottom-5 left-5 z-[1000] hidden md:flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-mono shadow-sm ${isSatellite ? "sat-glass text-white" : "street-card text-slate-900"
+        }`}>
         <span className="font-bold">
           {isHeatmapVisible ? "Microclimate Thermal Engine" : "Base Map Mode"}
         </span>

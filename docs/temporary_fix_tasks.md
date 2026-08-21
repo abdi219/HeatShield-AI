@@ -191,8 +191,8 @@ flowchart TD
 | **T1.5** | Route Finder | Guard SVG chart against division by zero | None | ✅ Fixed |
 | **T1.6** | Route Finder | Format negative/zero duration differences | None | ✅ Fixed |
 | **T1.7** | Map Canvas | Throttle mousemove hover calculations | None | ✅ Fixed |
-| **T2.1** | Spatial Pipeline | Quantized tile buffering for continuous panning/zooming | T1.2, T1.3 | ⏳ Blocked on Phase 1 |
-| **T2.2** | Map Canvas | Cross-tab route line persistence | T1.1 | ⏳ Blocked on Phase 1 |
-| **T3.1** | Routing Engine | True spatial microclimate sampling for Cool Route | T1.3, T2.1 | ⏳ Blocked on Phase 2 |
-| **T3.2** | Routing Engine | Dynamic step temperatures from real sampled data | T3.1 | ⏳ Blocked on T3.1 |
-| **T3.3** | Routing Engine | Orthogonal grid routing fallback (prevent building crossing) | T3.1 | ⏳ Blocked on T3.1 |
+| **T2.1** | Spatial Pipeline | Quantized tile buffering for continuous panning/zooming | T1.2, T1.3 | ✅ Fixed |
+| **T2.2** | Map Canvas | Cross-tab route line persistence | T1.1 | ✅ Fixed |
+| **T3.1** | Routing Engine | True spatial microclimate sampling for Cool Route | T1.3, T2.1 | ✅ Fixed |
+| **T3.2** | Routing Engine | Dynamic step temperatures from real sampled data | T3.1 | ✅ Fixed |
+| **T3.3** | Routing Engine | Orthogonal grid routing fallback (prevent building crossing) | T3.1 | ✅ Fixed |

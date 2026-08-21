@@ -79,6 +79,7 @@ interface AppState {
   isCalculatingRoutes: boolean;
   setRoutes: (fastest: AnalyzedRoute | null, cool: AnalyzedRoute | null) => void;
   setIsCalculatingRoutes: (isCalculating: boolean) => void;
+  clearRoutes: () => void;
 
   // Simulation State
   simulationInterventions: SimulationInterventions;
@@ -108,7 +109,15 @@ export const useAppStore = create<AppState>((set) => ({
   })),
 
   selectedCity: 'Miami',
-  setSelectedCity: (selectedCity) => set({ selectedCity }),
+  setSelectedCity: (selectedCity) => set({ 
+    selectedCity,
+    origin: null,
+    destination: null,
+    fastestRoute: null,
+    coolRoute: null,
+    pointPickingMode: null,
+    isCalculatingRoutes: false,
+  }),
 
   toastAlert: null,
   setToastAlert: (toastAlert) => set({ toastAlert }),
@@ -157,6 +166,14 @@ export const useAppStore = create<AppState>((set) => ({
   isCalculatingRoutes: false,
   setRoutes: (fastestRoute, coolRoute) => set({ fastestRoute, coolRoute }),
   setIsCalculatingRoutes: (isCalculatingRoutes) => set({ isCalculatingRoutes }),
+  clearRoutes: () => set({
+    origin: null,
+    destination: null,
+    fastestRoute: null,
+    coolRoute: null,
+    pointPickingMode: null,
+    isCalculatingRoutes: false,
+  }),
 
   // Simulation
   simulationInterventions: {

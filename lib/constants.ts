@@ -58,54 +58,54 @@ export function findMatchingPilotCity(lat: number, lng: number, placeName?: stri
   return null;
 }
 
-// Verified City Commute Corridors
+// Verified High-Impact City Commute Corridors
 export const CITY_COMMUTE_CORRIDORS: Record<string, Array<{ name: string; origin: { name: string; lat: number; lng: number }; destination: { name: string; lat: number; lng: number } }>> = {
   Phoenix: [
     {
-      name: "Civic Space Park to Roosevelt Arts",
-      origin: { name: "Civic Space Park Shade Hub", lat: 33.4533, lng: -112.0742 },
-      destination: { name: "Roosevelt Row Arts District", lat: 33.4586, lng: -112.0722 },
+      name: "Footprint Arena to Hance Park",
+      origin: { name: "Footprint Center Arena", lat: 33.4457, lng: -112.0712 },
+      destination: { name: "Margaret T. Hance Deck Park", lat: 33.4628, lng: -112.0738 },
     },
     {
-      name: "CityScape to Arizona Science Center",
-      origin: { name: "CityScape Plaza", lat: 33.4478, lng: -112.0736 },
-      destination: { name: "Heritage Square Science Hub", lat: 33.4496, lng: -112.0645 },
+      name: "Art Museum to Heritage Square",
+      origin: { name: "Phoenix Art Museum Plaza", lat: 33.4673, lng: -112.0735 },
+      destination: { name: "Heritage Square Cultural Hub", lat: 33.4496, lng: -112.0645 },
     },
   ],
   Austin: [
     {
-      name: "Texas Capitol to Lady Bird Trail",
-      origin: { name: "Texas State Capitol Plaza", lat: 30.2747, lng: -97.7404 },
-      destination: { name: "Ann and Roy Butler Trail", lat: 30.2625, lng: -97.7430 },
+      name: "UT Austin to 6th Street Hub",
+      origin: { name: "UT Austin Tower Plaza", lat: 30.2862, lng: -97.7394 },
+      destination: { name: "Historic 6th Street Corridor", lat: 30.2678, lng: -97.7410 },
     },
     {
-      name: "Congress Ave to Rainey District",
-      origin: { name: "Congress Ave & 6th St", lat: 30.2683, lng: -97.7428 },
-      destination: { name: "Rainey St Historic Corridor", lat: 30.2592, lng: -97.7383 },
+      name: "Texas Capitol to Lady Bird Trail",
+      origin: { name: "Texas State Capitol Plaza", lat: 30.2747, lng: -97.7404 },
+      destination: { name: "Ann and Roy Butler Lake Trail", lat: 30.2618, lng: -97.7435 },
     },
   ],
   Miami: [
     {
-      name: "Brickell Financial to Bayfront Park",
-      origin: { name: "Brickell Ave & SE 8th St", lat: 25.7663, lng: -80.1915 },
-      destination: { name: "Bayfront Park Shade Pavilion", lat: 25.7753, lng: -80.1873 },
+      name: "Brickell to Maurice Ferré Park",
+      origin: { name: "Brickell Financial Hub", lat: 25.7668, lng: -80.1932 },
+      destination: { name: "Maurice Ferré Waterfront Park", lat: 25.7850, lng: -80.1870 },
     },
     {
-      name: "Government Center to Miami Riverwalk",
-      origin: { name: "Downtown Government Center", lat: 25.7751, lng: -80.1952 },
-      destination: { name: "Miami Riverwalk Canopy", lat: 25.7690, lng: -80.1905 },
+      name: "Vizcaya to Bayfront Promenade",
+      origin: { name: "Vizcaya Station & Gardens", lat: 25.7495, lng: -80.2085 },
+      destination: { name: "Bayfront Park Shaded Canopy", lat: 25.7745, lng: -80.1865 },
     },
   ],
   "Las Vegas": [
     {
-      name: "Fremont East to Container Park",
-      origin: { name: "Fremont Street East", lat: 36.1699, lng: -115.1398 },
-      destination: { name: "Downtown Container Park", lat: 36.1682, lng: -115.1377 },
+      name: "Arts District to Container Park",
+      origin: { name: "18b Arts District Casino Hub", lat: 36.1558, lng: -115.1525 },
+      destination: { name: "Downtown Container Park Plaza", lat: 36.1685, lng: -115.1375 },
     },
     {
-      name: "Arts District to Clark County Plaza",
-      origin: { name: "18b Arts District Hub", lat: 36.1558, lng: -115.1525 },
-      destination: { name: "Clark County Govt Center Plaza", lat: 36.1633, lng: -115.1558 },
+      name: "Fremont to Symphony Park",
+      origin: { name: "Fremont Street Experience", lat: 36.1706, lng: -115.1440 },
+      destination: { name: "Symphony Park Tree Promenade", lat: 36.1688, lng: -115.1542 },
     },
   ],
 };
