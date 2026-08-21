@@ -185,9 +185,9 @@ flowchart TD
 | Task ID | Component | Task Description | Dependencies | Status |
 | :--- | :--- | :--- | :--- | :--- |
 | **T1.1** | Route Finder & Map | Sync map pins & render route lines + (A)(B) markers | None | ✅ Fixed |
-| **T1.2** | Map Canvas | Fix heatmap alpha stacking color distortion | None | ⏳ Ready |
-| **T1.3** | FortyGuard Engine | Fix diurnal night freeze & preserve thermal contrast | None | ⏳ Ready |
-| **T1.4** | HUD / Page | Reactive thermal legend for HRS & Canopy layers | None | ⏳ Ready |
+| **T1.2** | Map Canvas | Fix heatmap alpha stacking color distortion | None | ✅ Fixed |
+| **T1.3** | FortyGuard Engine | Fix diurnal night freeze & preserve thermal contrast | None | ✅ Fixed |
+| **T1.4** | HUD / Page | Reactive thermal legend for HRS & Canopy layers | None | ✅ Fixed |
 | **T1.5** | Route Finder | Guard SVG chart against division by zero | None | ⏳ Ready |
 | **T1.6** | Route Finder | Format negative/zero duration differences | None | ⏳ Ready |
 | **T1.7** | Map Canvas | Throttle mousemove hover calculations | None | ⏳ Ready |

@@ -403,23 +403,54 @@ export default function HomePage() {
           items-center gap-4 px-5 py-2.5 rounded-full shadow-lg ${glassCard}`}
         >
           <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${textMuted}`}>
-            Thermal Heat Scale
+            {activeHeatLayer === "heat_risk"
+              ? "Heat Risk Scale (HRS)"
+              : activeHeatLayer === "canopy_deficit"
+              ? "Canopy Deficit Scale"
+              : "Thermal Heat Scale"}
           </span>
-          <div className="flex items-center gap-4">
-            {[
-              { color: "#2B82C9", tempC: 22 },
-              { color: "#2CA099", tempC: 28 },
-              { color: "#E87722", tempC: 33 },
-              { color: "#D9381E", tempC: 38 },
-              { color: "#6B2D5C", tempC: 43, plus: true },
-            ].map(({ color, tempC, plus }) => (
-              <div key={tempC} className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                <span className={`text-[11px] font-mono font-bold ${textPrimary}`}>
-                  {formatTemp(tempC)}{unitSymbol}{plus ? "+" : ""}
-                </span>
-              </div>
-            ))}
+          <div className="flex items-center gap-3.5">
+            {activeHeatLayer === "heat_risk" ? (
+              [
+                { color: "#2B82C9", label: "0–30 (Low)" },
+                { color: "#2CA099", label: "30–50 (Mod)" },
+                { color: "#E87722", label: "50–70 (High)" },
+                { color: "#D9381E", label: "70–85 (V.High)" },
+                { color: "#6B2D5C", label: "85–100 (Extreme)" },
+              ].map(({ color, label }) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <span className={`text-[11px] font-mono font-bold ${textPrimary}`}>{label}</span>
+                </div>
+              ))
+            ) : activeHeatLayer === "canopy_deficit" ? (
+              [
+                { color: "#2CA099", label: "0–20% (Dense)" },
+                { color: "#2B82C9", label: "20–40% (Mod)" },
+                { color: "#E87722", label: "40–70% (Deficit)" },
+                { color: "#D9381E", label: "70–100% (Severe)" },
+              ].map(({ color, label }) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <span className={`text-[11px] font-mono font-bold ${textPrimary}`}>{label}</span>
+                </div>
+              ))
+            ) : (
+              [
+                { color: "#2B82C9", tempC: 22 },
+                { color: "#2CA099", tempC: 28 },
+                { color: "#E87722", tempC: 33 },
+                { color: "#D9381E", tempC: 38 },
+                { color: "#6B2D5C", tempC: 43, plus: true },
+              ].map(({ color, tempC, plus }) => (
+                <div key={tempC} className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <span className={`text-[11px] font-mono font-bold ${textPrimary}`}>
+                    {formatTemp(tempC)}{unitSymbol}{plus ? "+" : ""}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

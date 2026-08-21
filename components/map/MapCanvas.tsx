@@ -39,23 +39,23 @@ function createGradientPalette(layerType: string): Uint8ClampedArray {
   const grad = ctx.createLinearGradient(0, 0, 0, 256);
 
   if (layerType === "heat_risk") {
-    grad.addColorStop(0.0, "#2B82C9"); // Low Risk: Cool Blue (0-30)
-    grad.addColorStop(0.35, "#2CA099"); // Moderate: Teal (30-50)
-    grad.addColorStop(0.65, "#E87722"); // High: Orange (50-70)
-    grad.addColorStop(0.85, "#D9381E"); // Very High: Red (70-85)
-    grad.addColorStop(1.0, "#6B2D5C"); // Extreme: Dark Purple (85-100)
+    grad.addColorStop(0.0, "#2B82C9"); // 0–30: Low Risk Cool Blue
+    grad.addColorStop(0.35, "#2CA099"); // 30–50: Moderate Teal
+    grad.addColorStop(0.65, "#E87722"); // 50–70: High Orange
+    grad.addColorStop(0.85, "#D9381E"); // 70–85: Severe Red
+    grad.addColorStop(1.0, "#6B2D5C"); // 85–100: Extreme Dark Purple
   } else if (layerType === "canopy_deficit") {
-    grad.addColorStop(0.0, "#2CA099"); // Low Deficit (High Canopy): Teal
+    grad.addColorStop(0.0, "#2CA099"); // Dense Canopy (Low Deficit): Teal
     grad.addColorStop(0.35, "#2B82C9"); // Moderate: Blue
     grad.addColorStop(0.70, "#E87722"); // High Deficit: Orange
     grad.addColorStop(1.0, "#D9381E"); // Severe Deficit: Red
   } else {
     // Surface Temperature (Official FortyGuard Scale)
-    grad.addColorStop(0.0, "#2B82C9"); // 22°C - Cool Blue (#2B82C9)
-    grad.addColorStop(0.30, "#2CA099"); // 28°C - Teal (#2CA099)
-    grad.addColorStop(0.58, "#E87722"); // 33°C - Orange (#E87722)
-    grad.addColorStop(0.80, "#D9381E"); // 38°C - Red (#D9381E)
-    grad.addColorStop(1.0, "#6B2D5C"); // 43°C+ - Dark Purple (#6B2D5C)
+    grad.addColorStop(0.0, "#2B82C9"); // 20–24°C: Cool Baseline Blue
+    grad.addColorStop(0.28, "#2CA099"); // 27°C: Temperate Teal
+    grad.addColorStop(0.54, "#E87722"); // 33°C: Moderate Orange
+    grad.addColorStop(0.75, "#D9381E"); // 38°C: High Heat Red
+    grad.addColorStop(1.0, "#6B2D5C"); // 43°C+: Extreme Deep Purple
   }
 
   ctx.fillStyle = grad;
@@ -63,32 +63,12 @@ function createGradientPalette(layerType: string): Uint8ClampedArray {
   return ctx.getImageData(0, 0, 1, 256).data;
 }
 
-// Offscreen Gaussian radial blur brush
-function createRadialBrush(radius: number): HTMLCanvasElement {
-  const size = radius * 2;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return canvas;
-
-  const center = radius;
-  const grad = ctx.createRadialGradient(center, center, 0, center, center, radius);
-  grad.addColorStop(0.0, "rgba(0, 0, 0, 1.0)");
-  grad.addColorStop(0.35, "rgba(0, 0, 0, 0.85)");
-  grad.addColorStop(0.70, "rgba(0, 0, 0, 0.35)");
-  grad.addColorStop(1.0, "rgba(0, 0, 0, 0.0)");
-
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size, size);
-  return canvas;
-}
-
 export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const canvasOverlayRef = useRef<HTMLCanvasElement | null>(null);
+  const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const routeGroupRef = useRef<L.LayerGroup | null>(null);
   const clickPinRef = useRef<L.Marker | null>(null);
   const pointPickingModeRef = useRef<string | null>(null);
@@ -144,7 +124,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
   }, [isHeatmapVisible]);
 
   /**
-   * Hardware-Accelerated Canvas Heatmap Raster Engine
+   * Mathematically-Grounded Weighted Spatial Field Heatmap Engine
+   * Eliminates alpha-stacking distortion: preserves true physical temperatures across dense point clusters.
    */
   const drawHeatmap = useCallback(() => {
     const map = mapInstanceRef.current;
@@ -169,61 +150,105 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       return;
     }
 
-    const zoom = map.getZoom();
+    // Downscale by 4x for high-performance 60 FPS interpolation field
+    const scale = 0.25;
+    const offWidth = Math.max(64, Math.floor(size.x * scale));
+    const offHeight = Math.max(64, Math.floor(size.y * scale));
+    const totalCells = offWidth * offHeight;
 
-    // Scale brush radius dynamically with screen dimensions to guarantee 100% gapless metropolitan coverage
-    const nodeScreenDist = Math.max(24, size.x / 28);
-    const baseRadius = Math.max(52, Math.min(135, nodeScreenDist * 1.95));
-    const brush = createRadialBrush(baseRadius);
-    const brushHalf = baseRadius;
+    if (!offscreenCanvasRef.current) {
+      offscreenCanvasRef.current = document.createElement("canvas");
+    }
+    const offCanvas = offscreenCanvasRef.current;
+    if (offCanvas.width !== offWidth || offCanvas.height !== offHeight) {
+      offCanvas.width = offWidth;
+      offCanvas.height = offHeight;
+    }
+    const offCtx = offCanvas.getContext("2d");
+    if (!offCtx) return;
+
+    const valSum = new Float32Array(totalCells);
+    const weightSum = new Float32Array(totalCells);
+
+    // Adaptive radius scaled with screen and zoom to ensure continuous coverage
+    const nodeScreenDist = Math.max(20, size.x / 30);
+    const radiusOff = Math.max(10, Math.min(26, Math.round(nodeScreenDist * scale * 1.6)));
+    const radiusOff2 = radiusOff * radiusOff;
+    const sigma2 = 2 * (radiusOff * 0.48) * (radiusOff * 0.48);
 
     const layerType = activeHeatLayerRef.current;
 
-    // 1. Draw intensity accumulation buffer
-    ctx.globalCompositeOperation = "source-over";
-
+    // 1. Accumulate Weighted Field (Value * Weight and Weight)
     geojson.features.forEach((feature) => {
       if (feature.geometry.type !== "Point") return;
       const [lng, lat] = (feature.geometry as GeoJSON.Point).coordinates;
 
-      const point = map.latLngToContainerPoint([lat, lng]);
-      if (point.x < -brushHalf * 2 || point.x > size.x + brushHalf * 2 || point.y < -brushHalf * 2 || point.y > size.y + brushHalf * 2) {
+      const pt = map.latLngToContainerPoint([lat, lng]);
+      const cx = Math.round(pt.x * scale);
+      const cy = Math.round(pt.y * scale);
+
+      if (cx < -radiusOff || cx >= offWidth + radiusOff || cy < -radiusOff || cy >= offHeight + radiusOff) {
         return;
       }
 
-      let normalizedWeight = 0.55;
+      let normVal = 0.5;
       if (layerType === "heat_risk") {
         const score = feature.properties?.hrsScore ?? 50;
-        normalizedWeight = Math.max(0.15, Math.min(1.0, score / 100));
+        normVal = Math.max(0, Math.min(1.0, score / 100));
       } else if (layerType === "canopy_deficit") {
         const canopy = feature.properties?.canopyPct ?? 20;
-        normalizedWeight = Math.max(0.15, Math.min(1.0, (100 - canopy) / 100));
+        normVal = Math.max(0, Math.min(1.0, (100 - canopy) / 100));
       } else {
-        const temp = feature.properties?.surfaceTemp ?? 34;
-        normalizedWeight = Math.max(0.15, Math.min(1.0, (temp - 20) / 24));
+        const temp = feature.properties?.surfaceTemp ?? 32;
+        normVal = Math.max(0, Math.min(1.0, (temp - 20) / 24)); // 20°C (0.0) -> 44°C (1.0)
       }
 
-      ctx.globalAlpha = Math.min(1.0, normalizedWeight * 0.95);
-      ctx.drawImage(brush, point.x - brushHalf, point.y - brushHalf);
+      const minX = Math.max(0, cx - radiusOff);
+      const maxX = Math.min(offWidth - 1, cx + radiusOff);
+      const minY = Math.max(0, cy - radiusOff);
+      const maxY = Math.min(offHeight - 1, cy + radiusOff);
+
+      for (let y = minY; y <= maxY; y++) {
+        const dy = y - cy;
+        const dy2 = dy * dy;
+        const rowOffset = y * offWidth;
+        for (let x = minX; x <= maxX; x++) {
+          const dx = x - cx;
+          const dist2 = dx * dx + dy2;
+          if (dist2 <= radiusOff2) {
+            const w = Math.exp(-dist2 / sigma2);
+            const idx = rowOffset + x;
+            valSum[idx] += normVal * w;
+            weightSum[idx] += w;
+          }
+        }
+      }
     });
 
-    // 2. Colorize alpha channel using 256-step Palette LUT
-    const imgData = ctx.getImageData(0, 0, size.x, size.y);
+    // 2. Colorize using True Normalized Value (valSum / weightSum)
+    const imgData = offCtx.createImageData(offWidth, offHeight);
     const pixels = imgData.data;
     const palette = createGradientPalette(layerType);
 
-    for (let i = 0; i < pixels.length; i += 4) {
-      const alpha = pixels[i + 3];
-      if (alpha > 2) {
-        const lutIndex = Math.min(255, Math.round(alpha)) * 4;
-        pixels[i] = palette[lutIndex];         // R
-        pixels[i + 1] = palette[lutIndex + 1]; // G
-        pixels[i + 2] = palette[lutIndex + 2]; // B
-        pixels[i + 3] = Math.round(Math.min(160, Math.max(70, alpha * 0.95))); // 0.60 Opacity
+    for (let i = 0; i < totalCells; i++) {
+      const w = weightSum[i];
+      if (w > 0.008) {
+        const normalizedVal = valSum[i] / w;
+        const lutIndex = Math.min(255, Math.max(0, Math.round(normalizedVal * 255))) * 4;
+        const pIdx = i * 4;
+        pixels[pIdx] = palette[lutIndex];
+        pixels[pIdx + 1] = palette[lutIndex + 1];
+        pixels[pIdx + 2] = palette[lutIndex + 2];
+        pixels[pIdx + 3] = Math.round(Math.min(160, Math.max(65, Math.min(1.0, w * 1.3) * 155))); // 0.60 Opacity with smooth edges
       }
     }
 
-    ctx.putImageData(imgData, 0, 0);
+    offCtx.putImageData(imgData, 0, 0);
+
+    // 3. Bilinear Upscaling to Full Map Canvas
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(offCanvas, 0, 0, size.x, size.y);
   }, []);
 
   const requestHeatmapRedraw = useCallback(() => {

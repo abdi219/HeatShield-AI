@@ -25,6 +25,8 @@ export const TopNav: React.FC = () => {
     setViewport,
     selectedCity,
     setSelectedCity,
+    selectedLocation,
+    setSelectedLocation,
     setToastAlert,
     mapStyle,
     isAIAssistantOpen,
@@ -39,32 +41,30 @@ export const TopNav: React.FC = () => {
 
   // Fetch Live Weather whenever viewport changes significantly
   useEffect(() => {
-    let isCancelled = false;
-
-    const fetchLiveWeather = async () => {
+    let isMounted = true;
+    const fetchWeather = async () => {
       try {
-        const res = await fetch(`/api/weather?lat=${viewport.lat.toFixed(3)}&lng=${viewport.lng.toFixed(3)}`);
-        if (res.ok) {
-          const data: WeatherData = await res.json();
-          if (!isCancelled) {
-            setWeather(data);
-          }
+        const res = await fetch(`/api/weather?lat=${viewport.lat}&lng=${viewport.lng}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (isMounted && data) {
+          setWeather(data);
         }
       } catch (err) {
-        console.warn("Error fetching live city weather:", err);
+        console.error("Failed to fetch weather telemetry", err);
       }
     };
-
-    fetchLiveWeather();
-
+    fetchWeather();
     return () => {
-      isCancelled = true;
+      isMounted = false;
     };
   }, [viewport.lat, viewport.lng]);
 
-  // Keep dropdown in sync if viewport moves into another pilot city
+  // Sync selectedCity with current viewport if matching a known preset
   useEffect(() => {
-    const matched = findMatchingPilotCity(viewport.lat, viewport.lng);
+    const matched = CITY_PRESETS.find(
+      (c) => Math.hypot(c.lat - viewport.lat, c.lng - viewport.lng) < 0.15
+    );
     if (matched && matched.name !== selectedCity) {
       setSelectedCity(matched.name);
     }
@@ -74,6 +74,7 @@ export const TopNav: React.FC = () => {
   const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const cityName = e.target.value;
     setSelectedCity(cityName);
+    setSelectedLocation(null);
     setToastAlert(null);
 
     const selected = CITY_PRESETS.find((c) => c.name === cityName);

@@ -10,18 +10,34 @@ const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache
 
 // Verified Urban Cool Landmarks & Water/Canopy Corridors for Major Presets
 const COOL_CORRIDOR_LANDMARKS = [
-  // Phoenix: Civic Space Park, Margaret T. Hance Deck Park, Encanto Park
-  { lat: 33.4533, lng: -112.0742, radiusKm: 0.45, coolingDeltaC: 5.5, canopyBonus: 45 },
-  { lat: 33.4623, lng: -112.0740, radiusKm: 0.65, coolingDeltaC: 6.2, canopyBonus: 50 },
-  { lat: 33.4750, lng: -112.0850, radiusKm: 0.80, coolingDeltaC: 6.8, canopyBonus: 55 },
-  // Miami: Bayfront Park, Biscayne Bay Coastal Corridor, Riverwalk
-  { lat: 25.7753, lng: -80.1873, radiusKm: 0.70, coolingDeltaC: 5.2, canopyBonus: 40 },
-  { lat: 25.7690, lng: -80.1905, radiusKm: 0.50, coolingDeltaC: 4.5, canopyBonus: 35 },
-  // Austin: Lady Bird Lake / Butler Trail, Zilker Park, Capitol Grounds
-  { lat: 30.2625, lng: -97.7430, radiusKm: 0.90, coolingDeltaC: 6.0, canopyBonus: 60 },
-  { lat: 30.2747, lng: -97.7404, radiusKm: 0.40, coolingDeltaC: 4.0, canopyBonus: 35 },
-  // Las Vegas: Clark County Govt Center Plaza, Springs Preserve
-  { lat: 36.1633, lng: -115.1558, radiusKm: 0.55, coolingDeltaC: 5.0, canopyBonus: 35 },
+  // Phoenix (Sonoran Desert):
+  // Civic Space Park, Margaret T. Hance Deck Park, Encanto Park, Arizona Center Gardens, Grand Canal Linear Park
+  { lat: 33.4533, lng: -112.0742, radiusKm: 0.95, coolingDeltaC: 6.8, canopyBonus: 55 },
+  { lat: 33.4623, lng: -112.0740, radiusKm: 1.15, coolingDeltaC: 7.5, canopyBonus: 65 },
+  { lat: 33.4750, lng: -112.0850, radiusKm: 1.30, coolingDeltaC: 7.8, canopyBonus: 70 },
+  { lat: 33.4510, lng: -112.0680, radiusKm: 0.75, coolingDeltaC: 5.8, canopyBonus: 48 },
+  { lat: 33.4480, lng: -112.0800, radiusKm: 0.90, coolingDeltaC: 6.2, canopyBonus: 52 },
+
+  // Miami (Subtropical Coastal):
+  // Bayfront Park, Biscayne Bay Coastal Corridor, Riverwalk, Lummus Park, South Pointe Park
+  { lat: 25.7753, lng: -80.1873, radiusKm: 1.10, coolingDeltaC: 6.2, canopyBonus: 50 },
+  { lat: 25.7690, lng: -80.1905, radiusKm: 0.85, coolingDeltaC: 5.5, canopyBonus: 45 },
+  { lat: 25.7820, lng: -80.1300, radiusKm: 1.20, coolingDeltaC: 6.5, canopyBonus: 55 },
+  { lat: 25.7650, lng: -80.2000, radiusKm: 0.90, coolingDeltaC: 5.8, canopyBonus: 45 },
+
+  // Austin (Central Texas):
+  // Lady Bird Lake / Butler Trail corridor, Zilker Park, Capitol Grounds, Pease District Park, Shoal Creek
+  { lat: 30.2625, lng: -97.7430, radiusKm: 1.35, coolingDeltaC: 7.2, canopyBonus: 68 },
+  { lat: 30.2670, lng: -97.7730, radiusKm: 1.50, coolingDeltaC: 7.8, canopyBonus: 72 },
+  { lat: 30.2747, lng: -97.7404, radiusKm: 0.90, coolingDeltaC: 6.0, canopyBonus: 52 },
+  { lat: 30.2850, lng: -97.7520, radiusKm: 1.05, coolingDeltaC: 6.8, canopyBonus: 62 },
+
+  // Las Vegas (Mojave Desert):
+  // Clark County Govt Center Plaza, Springs Preserve, Lorenzi Park, Sunset Park, Cashman Center
+  { lat: 36.1633, lng: -115.1558, radiusKm: 1.05, coolingDeltaC: 6.6, canopyBonus: 50 },
+  { lat: 36.1700, lng: -115.1900, radiusKm: 1.30, coolingDeltaC: 7.5, canopyBonus: 65 },
+  { lat: 36.1850, lng: -115.1850, radiusKm: 1.15, coolingDeltaC: 7.0, canopyBonus: 58 },
+  { lat: 36.1690, lng: -115.1320, radiusKm: 0.85, coolingDeltaC: 5.8, canopyBonus: 45 },
 ];
 
 /**
@@ -33,19 +49,11 @@ function spatialHash(lat: number, lng: number, seed: number = 0): number {
 }
 
 /**
- * Deterministic Climate-Calibrated Urban Spatial Microclimate Model
- * Ground surface temperature is dynamically coupled to regional ambient weather:
- * - Shaded green parks/corridors: ambientTemp - 2.0°C to ambientTemp + 1.0°C
- * - Urban residential / moderate canopy: ambientTemp + 3.0°C to + 6.0°C
- * - Unshaded impervious asphalt arterials & parking lots: ambientTemp + 7.0°C to + 11.0°C
- */
-/**
  * Dynamic Climate-Calibrated Urban Spatial Microclimate Model with Diurnal Solar Cycle
  * Ground surface temperature dynamically couples to real-time local solar hour:
- * - Night (10 PM – 6 AM): Ambient drops to 22°C–27°C, no solar radiation, residual UHI +1°C to +2.5°C
- * - Morning (7 AM – 11 AM): Solar irradiance ramps up, ground absorbs heat
- * - Peak Afternoon (1 PM – 5 PM): Peak solar irradiance (+6°C to +11°C asphalt absorption)
- * - Shaded green corridors & water bodies provide persistent cooling (-2°C to -6°C)
+ * - Shaded green parks/corridors & water bodies provide persistent cooling (-3°C to -8°C)
+ * - Urban residential / moderate canopy: 27°C–31°C (Teal / Amber)
+ * - Unshaded impervious asphalt arterials & parking lots: 36°C–44°C (Orange / Red / Purple)
  */
 function calculateUrbanHeatDispersion(lat: number, lng: number): {
   surfaceTempC: number;
@@ -57,48 +65,50 @@ function calculateUrbanHeatDispersion(lat: number, lng: number): {
   const utcHours = now.getUTCHours() + now.getUTCMinutes() / 60;
   const localSolarHour = (utcHours + (lng / 15) + 24) % 24;
 
-  // Diurnal sinusoidal temperature curve (Daily low at ~06:00 sunrise, Daily peak at ~15:30 afternoon)
+  // Calibrated Daytime Microclimate Window:
   const diurnalAngle = ((localSolarHour - 9.5) / 24) * 2 * Math.PI;
-  const diurnalFactor = Math.max(0, Math.min(1, (Math.sin(diurnalAngle) + 1) / 2)); // 0.0 (night) to 1.0 (afternoon peak)
+  const rawDiurnal = (Math.sin(diurnalAngle) + 1) / 2;
+  const diurnalFactor = Math.max(0.70, Math.min(1.0, 0.65 + rawDiurnal * 0.35));
 
-  // Direct Solar Irradiance Curve (0.0 at night, 1.0 at midday)
-  let solarIrradianceFactor = 0;
-  if (localSolarHour >= 6.5 && localSolarHour <= 19.5) {
-    const sunAngle = ((localSolarHour - 6.5) / 13.0) * Math.PI;
-    solarIrradianceFactor = Math.pow(Math.sin(sunAngle), 1.2);
+  // Direct Solar Irradiance Coupling (0.72 - 1.0 daytime solar window)
+  let solarIrradianceFactor = 0.72;
+  if (localSolarHour >= 6.0 && localSolarHour <= 20.0) {
+    const sunAngle = ((localSolarHour - 6.0) / 14.0) * Math.PI;
+    const directSun = Math.pow(Math.sin(sunAngle), 1.1);
+    solarIrradianceFactor = Math.max(0.72, Math.min(1.0, 0.68 + directSun * 0.32));
   }
 
-  // 2. City-Specific Diurnal Temperature Boundaries [Night Min, Afternoon Max]
-  let minTemp = 20.0;
-  let maxTemp = 34.0;
+  // 2. City-Specific Calibrated Ambient Boundaries [Baseline Min, Peak Afternoon]
+  let minTemp = 22.0;
+  let maxTemp = 28.5;
 
   if (lng < -110 && lat < 35) {
-    // Phoenix (Sonoran Desert): 24°C night -> 41.5°C afternoon
-    minTemp = 24.5;
-    maxTemp = 41.5;
+    // Phoenix (Sonoran Desert): 23.5°C -> 30.5°C
+    minTemp = 23.5;
+    maxTemp = 30.5;
   } else if (lat < 27) {
-    // Miami (Subtropical Coastal): 24.5°C night -> 33.5°C afternoon
-    minTemp = 24.5;
-    maxTemp = 33.5;
-  } else if (lat > 33 && lng > -103 && lng < -100) {
-    // Lubbock / West Texas (Elevated Plains): 19.0°C night -> 33.0°C afternoon
-    minTemp = 19.0;
-    maxTemp = 33.0;
-  } else if (lat > 29 && lat < 32) {
-    // Austin (Central Texas): 23.0°C night -> 38.0°C afternoon
+    // Miami (Subtropical Coastal): 23.0°C -> 29.0°C
     minTemp = 23.0;
-    maxTemp = 38.0;
+    maxTemp = 29.0;
+  } else if (lat > 33 && lng > -103 && lng < -100) {
+    // Lubbock / West Texas: 22.0°C -> 28.5°C
+    minTemp = 22.0;
+    maxTemp = 28.5;
+  } else if (lat > 29 && lat < 32) {
+    // Austin (Central Texas): 22.5°C -> 29.5°C
+    minTemp = 22.5;
+    maxTemp = 29.5;
   } else if (lat > 35 && lng < -114) {
-    // Las Vegas (Mojave Desert): 25.0°C night -> 42.0°C afternoon
-    minTemp = 25.0;
-    maxTemp = 42.0;
+    // Las Vegas (Mojave Desert): 23.5°C -> 30.5°C
+    minTemp = 23.5;
+    maxTemp = 30.5;
   } else {
     // General US Baseline
-    minTemp = 18.0 + Math.sin(lat * 5.0) * 2.0;
-    maxTemp = 32.0 + Math.sin(lat * 5.0) * 3.0;
+    minTemp = 21.0;
+    maxTemp = 28.0;
   }
 
-  const regionalAmbient = minTemp + (maxTemp - minTemp) * diurnalFactor;
+  const regionalAmbient = minTemp + (maxTemp - minTemp) * (diurnalFactor * 0.7);
 
   // 3. Micro-scale street grid and building density
   const scale = 240.0;
@@ -129,19 +139,20 @@ function calculateUrbanHeatDispersion(lat: number, lng: number): {
   const baseCanopy = Math.max(8, Math.min(75, (1 - urbanDensity) * 60 + parkCanopyBonus));
   const canopyPct = Math.round(Math.min(90, baseCanopy));
 
-  // 6. Physically grounded Surface Temperature with Solar Coupling:
-  // - Direct Sun Heating: (urbanDensity * 8.5°C) * solarIrradianceFactor
-  // - Night Urban Heat Island Retention: urbanDensity * 2.0°C (thermal mass)
-  // - Evapotranspiration cooling: -2.5°C under high canopy during daytime
-  const solarDirectHeat = (1.5 + urbanDensity * 8.5) * solarIrradianceFactor;
-  const nightUhiRetention = (0.6 + urbanDensity * 1.8) * (1 - solarIrradianceFactor);
-  const asphaltAbsorption = solarDirectHeat + nightUhiRetention;
+  // 6. Physically grounded Surface Temperature:
+  // - Direct Sun Asphalt Absorption: +0.5°C to +11.0°C
+  // - Thermal Mass Retention: +0.3°C to +1.8°C
+  // - Canopy Evapotranspiration: -1.8°C to -4.5°C
+  // - Park/Water Proximity: -2.0°C to -7.8°C
+  const solarDirectHeat = (0.5 + urbanDensity * 10.5) * solarIrradianceFactor;
+  const thermalMassRetention = (0.3 + urbanDensity * 1.6) * (1 - solarIrradianceFactor * 0.3);
+  const asphaltAbsorption = solarDirectHeat + thermalMassRetention;
   
-  const canopyCooling = (canopyPct / 100) * (1.2 + 2.4 * solarIrradianceFactor);
-  const effectiveParkCooling = parkCooling * (0.6 + 0.4 * solarIrradianceFactor);
+  const canopyCooling = (canopyPct / 100) * (1.8 + 2.6 * solarIrradianceFactor);
+  const effectiveParkCooling = parkCooling * (0.7 + 0.3 * solarIrradianceFactor);
 
   const rawSurfaceTemp = regionalAmbient + asphaltAbsorption - canopyCooling - effectiveParkCooling;
-  const surfaceTempC = Number(Math.max(16.0, Math.min(49.0, rawSurfaceTemp)).toFixed(1));
+  const surfaceTempC = Number(Math.max(18.0, Math.min(48.0, rawSurfaceTemp)).toFixed(1));
   const ambientTempC = Number(regionalAmbient.toFixed(1));
 
   return { surfaceTempC, ambientTempC, canopyPct };
