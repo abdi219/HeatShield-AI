@@ -562,44 +562,54 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       handleMapInteraction(e.latlng.lat, e.latlng.lng);
     });
 
+    let mouseMoveThrottleId: number | null = null;
+
     map.on("mousemove", (e: L.LeafletMouseEvent) => {
-      const geojson = rawGridDataRef.current;
-      if (!geojson || !geojson.features || geojson.features.length === 0) {
-        setHoverTelemetry(null);
-        return;
-      }
-
-      const curLat = e.latlng.lat;
-      const curLng = e.latlng.lng;
-
-      let nearest: any = null;
-      let minDist = Infinity;
-
-      for (let i = 0; i < geojson.features.length; i++) {
-        const f = geojson.features[i];
-        if (f.geometry.type !== "Point") continue;
-        const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates;
-        const dist = Math.hypot(curLat - lat, curLng - lng);
-        if (dist < minDist) {
-          minDist = dist;
-          nearest = f;
+      if (mouseMoveThrottleId) return;
+      mouseMoveThrottleId = window.requestAnimationFrame(() => {
+        mouseMoveThrottleId = null;
+        const geojson = rawGridDataRef.current;
+        if (!geojson || !geojson.features || geojson.features.length === 0) {
+          setHoverTelemetry(null);
+          return;
         }
-      }
 
-      if (nearest && minDist < 0.02) {
-        setHoverTelemetry({
-          x: e.containerPoint.x,
-          y: e.containerPoint.y,
-          temp: nearest.properties?.surfaceTemp ?? 34.5,
-          score: nearest.properties?.hrsScore ?? 50,
-          level: nearest.properties?.hrsLevel ?? "moderate",
-        });
-      } else {
-        setHoverTelemetry(null);
-      }
+        const curLat = e.latlng.lat;
+        const curLng = e.latlng.lng;
+
+        let nearest: any = null;
+        let minDist = Infinity;
+
+        for (let i = 0; i < geojson.features.length; i++) {
+          const f = geojson.features[i];
+          if (f.geometry.type !== "Point") continue;
+          const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates;
+          const dist = Math.hypot(curLat - lat, curLng - lng);
+          if (dist < minDist) {
+            minDist = dist;
+            nearest = f;
+          }
+        }
+
+        if (nearest && minDist < 0.02) {
+          setHoverTelemetry({
+            x: e.containerPoint.x,
+            y: e.containerPoint.y,
+            temp: nearest.properties?.surfaceTemp ?? 34.5,
+            score: nearest.properties?.hrsScore ?? 50,
+            level: nearest.properties?.hrsLevel ?? "moderate",
+          });
+        } else {
+          setHoverTelemetry(null);
+        }
+      });
     });
 
     map.on("mouseout", () => {
+      if (mouseMoveThrottleId) {
+        cancelAnimationFrame(mouseMoveThrottleId);
+        mouseMoveThrottleId = null;
+      }
       setHoverTelemetry(null);
     });
 

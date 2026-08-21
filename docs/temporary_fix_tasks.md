@@ -188,9 +188,9 @@ flowchart TD
 | **T1.2** | Map Canvas | Fix heatmap alpha stacking color distortion | None | ✅ Fixed |
 | **T1.3** | FortyGuard Engine | Fix diurnal night freeze & preserve thermal contrast | None | ✅ Fixed |
 | **T1.4** | HUD / Page | Reactive thermal legend for HRS & Canopy layers | None | ✅ Fixed |
-| **T1.5** | Route Finder | Guard SVG chart against division by zero | None | ⏳ Ready |
-| **T1.6** | Route Finder | Format negative/zero duration differences | None | ⏳ Ready |
-| **T1.7** | Map Canvas | Throttle mousemove hover calculations | None | ⏳ Ready |
+| **T1.5** | Route Finder | Guard SVG chart against division by zero | None | ✅ Fixed |
+| **T1.6** | Route Finder | Format negative/zero duration differences | None | ✅ Fixed |
+| **T1.7** | Map Canvas | Throttle mousemove hover calculations | None | ✅ Fixed |
 | **T2.1** | Spatial Pipeline | Quantized tile buffering for continuous panning/zooming | T1.2, T1.3 | ⏳ Blocked on Phase 1 |
 | **T2.2** | Map Canvas | Cross-tab route line persistence | T1.1 | ⏳ Blocked on Phase 1 |
 | **T3.1** | Routing Engine | True spatial microclimate sampling for Cool Route | T1.3, T2.1 | ⏳ Blocked on Phase 2 |

@@ -33,13 +33,20 @@ function formatSmartDuration(seconds: number): string {
 
   const hours = Math.floor(totalMinutes / 60);
   const remainingMins = totalMinutes % 60;
-  if (hours < 24) {
-    return remainingMins > 0 ? `${hours}h ${remainingMins}m` : `${hours}h`;
-  }
-
   const days = Math.floor(hours / 24);
   const remainingHours = hours % 24;
   return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+}
+
+/**
+ * Duration difference formatter
+ */
+function formatDurationDiff(coolSec: number, fastSec: number): string {
+  const diffSec = coolSec - fastSec;
+  const diffMin = Math.round(diffSec / 60);
+  if (diffMin > 0) return `(+${diffMin} min)`;
+  if (diffMin === 0) return `(Equal time)`;
+  return `(${Math.abs(diffMin)} min faster)`;
 }
 
 export function RouteFinder() {
@@ -249,8 +256,9 @@ export function RouteFinder() {
     const minT = 20;
     const maxT = 46;
 
+    const denom = Math.max(1, profile.length - 1);
     const points = profile.map((p, i) => {
-      const x = (i / (profile.length - 1)) * w;
+      const x = profile.length === 1 ? w / 2 : (i / denom) * w;
       const normalizedY = Math.max(0, Math.min(1, (p.surfaceTempCelsius - minT) / (maxT - minT)));
       const y = h - (normalizedY * (h - 10)) - 4;
       return `${x.toFixed(1)},${y.toFixed(1)}`;
@@ -525,7 +533,7 @@ export function RouteFinder() {
                 <div className={`text-base font-mono font-bold ${textPrimary} flex items-baseline gap-1`}>
                   <span>{formatSmartDuration(coolRoute.durationSeconds)}</span>
                   <span className={`text-[10px] font-normal ${textMuted}`}>
-                    (+{formatSmartDuration(coolRoute.durationSeconds - fastestRoute.durationSeconds)})
+                    {formatDurationDiff(coolRoute.durationSeconds, fastestRoute.durationSeconds)}
                   </span>
                 </div>
                 <span className={`text-[10px] font-mono ${textSecondary}`}>
