@@ -86,6 +86,8 @@ interface AppState {
   setSimulationInterventions: (interventions: Partial<SimulationInterventions>) => void;
   simulationResult: SimulationResult | null;
   setSimulationResult: (result: SimulationResult | null) => void;
+  simulationVisualizationMode: 'mitigated' | 'baseline' | 'delta';
+  setSimulationVisualizationMode: (mode: 'mitigated' | 'baseline' | 'delta') => void;
   isSimulating: boolean;
   setIsSimulating: (isSimulating: boolean) => void;
 
@@ -187,6 +189,8 @@ export const useAppStore = create<AppState>((set) => ({
   })),
   simulationResult: null,
   setSimulationResult: (simulationResult) => set({ simulationResult }),
+  simulationVisualizationMode: 'mitigated',
+  setSimulationVisualizationMode: (simulationVisualizationMode) => set({ simulationVisualizationMode }),
   isSimulating: false,
   setIsSimulating: (isSimulating) => set({ isSimulating }),
 

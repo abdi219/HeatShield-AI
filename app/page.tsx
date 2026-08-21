@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useAppStore } from "@/lib/store";
 import { CITY_PRESETS } from "@/lib/constants";
 import { TopNav } from "@/components/hud/TopNav";
 import { RouteFinder } from "@/components/routes/RouteFinder";
+import { WhatIfSimulator } from "@/components/simulator/WhatIfSimulator";
 import { Layers, Flame, Trees, ChevronRight, Sparkles, MapPin } from "lucide-react";
 
 const MapCanvas = dynamic(
@@ -65,9 +66,11 @@ export default function HomePage() {
     }
   };
 
-  // Auto-inspect hotspot on initial mount if nothing is selected
+  // Auto-inspect hotspot on initial mount only once
+  const hasAutoInspectedRef = useRef(false);
   useEffect(() => {
-    if (!selectedLocation) {
+    if (!hasAutoInspectedRef.current) {
+      hasAutoInspectedRef.current = true;
       handleMapClick(viewport.lat, viewport.lng);
     }
   }, []);
@@ -184,10 +187,12 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ── Left Dock: Thermal Layers ─────────────────────────────────────── */}
+        {/* ── Left Dock: Thermal Layers / Route Finder / What-If Simulator ──── */}
         <div className="absolute top-20 left-5 z-[1000]">
           {activeTab === "routes" ? (
             <RouteFinder />
+          ) : activeTab === "simulator" ? (
+            <WhatIfSimulator />
           ) : (
             <div className={`w-64 p-4 rounded-2xl space-y-3 shadow-xl ${glassCard}`}>
               {/* Header */}

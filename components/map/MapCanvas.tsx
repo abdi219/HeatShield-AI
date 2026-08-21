@@ -105,6 +105,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
   const canvasOverlayRef = useRef<HTMLCanvasElement | null>(null);
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const routeGroupRef = useRef<L.LayerGroup | null>(null);
+  const simulationGroupRef = useRef<L.LayerGroup | null>(null);
   const clickPinRef = useRef<L.Marker | null>(null);
   const pointPickingModeRef = useRef<string | null>(null);
   const activeHeatLayerRef = useRef<string>("surface_temp");
@@ -140,6 +141,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     destination,
     pointPickingMode,
     temperatureUnit,
+    simulationResult,
+    simulationVisualizationMode,
     setOrigin,
     setDestination,
     setPointPickingMode,
@@ -230,14 +233,43 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       }
 
       let normVal = 0.5;
+      const isSimActive = activeTab === "simulator" && simulationResult && simulationVisualizationMode !== "baseline";
+      let coolingDecay = 0;
+
+      if (isSimActive && simulationResult) {
+        const simCenterLat = selectedLocation ? selectedLocation.lat : viewport.lat;
+        const simCenterLng = selectedLocation ? selectedLocation.lng : viewport.lng;
+        const simRadius = simulationResult.estimatedCoolingRadiusMeters || 350;
+        const dLat = (lat - simCenterLat) * 111320;
+        const dLng = (lng - simCenterLng) * (111320 * Math.cos((simCenterLat * Math.PI) / 180));
+        const distFromCenter = Math.hypot(dLat, dLng);
+        if (distFromCenter <= simRadius) {
+          coolingDecay = Math.cos((distFromCenter / simRadius) * (Math.PI / 2));
+        }
+      }
+
       if (layerType === "heat_risk") {
-        const score = feature.properties?.hrsScore ?? 50;
+        let score = feature.properties?.hrsScore ?? 50;
+        if (isSimActive && coolingDecay > 0 && simulationResult) {
+          score = Math.max(10, score - simulationResult.heatRiskScoreReductionDelta * coolingDecay);
+        }
         normVal = Math.max(0, Math.min(1.0, score / 100));
       } else if (layerType === "canopy_deficit") {
-        const canopy = feature.properties?.canopyPct ?? 20;
+        let canopy = feature.properties?.canopyPct ?? 20;
+        if (isSimActive && coolingDecay > 0 && simulationResult) {
+          canopy = Math.min(95, canopy + simulationResult.interventions.treeCanopyCoveragePct * 0.7 * coolingDecay);
+        }
         normVal = Math.max(0, Math.min(1.0, (100 - canopy) / 100));
       } else {
-        const temp = feature.properties?.surfaceTemp ?? 32;
+        let temp = feature.properties?.surfaceTemp ?? 32;
+        if (isSimActive && coolingDecay > 0 && simulationResult) {
+          if (simulationVisualizationMode === "delta") {
+            const coolingDrop = simulationResult.temperatureReductionDelta * coolingDecay;
+            temp = Math.max(20, 36 - coolingDrop * 2.8); // Highlight active cooling zone in delta view
+          } else {
+            temp = Math.max(20, temp - simulationResult.temperatureReductionDelta * coolingDecay);
+          }
+        }
         normVal = Math.max(0, Math.min(1.0, (temp - 20) / 24)); // 20°C (0.0) -> 44°C (1.0)
       }
 
@@ -515,6 +547,69 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     }
   }, [activeTab, fastestRoute, coolRoute, selectedRouteId, origin, destination]);
 
+  // Render Simulation Sector Boundary & Floating Zone Badge
+  useEffect(() => {
+    if (!simulationGroupRef.current || !mapInstanceRef.current) return;
+    simulationGroupRef.current.clearLayers();
+
+    if (activeTab !== "simulator" || !simulationResult) {
+      requestHeatmapRedraw();
+      return;
+    }
+
+    const centerLat = selectedLocation ? selectedLocation.lat : viewport.lat;
+    const centerLng = selectedLocation ? selectedLocation.lng : viewport.lng;
+    const radius = simulationResult.estimatedCoolingRadiusMeters || 350;
+
+    const isDelta = simulationVisualizationMode === "delta";
+    const isMitigated = simulationVisualizationMode === "mitigated";
+
+    // 1. Intervention Boundary Circle
+    L.circle([centerLat, centerLng], {
+      radius: radius,
+      color: isDelta ? "#10B981" : isMitigated ? "#2B82C9" : "#E87722",
+      weight: 2.5,
+      dashArray: "6, 6",
+      fillColor: isDelta ? "#10B981" : isMitigated ? "#2B82C9" : "#E87722",
+      fillOpacity: isDelta ? 0.18 : 0.08,
+      interactive: false,
+    }).addTo(simulationGroupRef.current);
+
+    // 2. Central Floating Zone Badge (High-Contrast Solid Pill)
+    const badgeHtml = `
+      <div style="
+        background: #0F172A !important;
+        color: #FFFFFF !important;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        border: 2px solid ${isDelta ? "#10B981" : "#38BDF8"};
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      ">
+        <span style="font-size: 13px; line-height: 1;">🌿</span>
+        <span style="color: #FFFFFF;">-${simulationResult.temperatureReductionDelta}°C Cooling Zone <span style="color: rgba(255,255,255,0.7); font-weight: normal;">(~${radius}m)</span></span>
+      </div>
+    `;
+    const icon = L.divIcon({
+      html: badgeHtml,
+      className: "",
+      iconSize: [0, 0],
+      iconAnchor: [0, 0],
+    });
+    L.marker([centerLat, centerLng], { icon, interactive: false }).addTo(simulationGroupRef.current);
+
+    requestHeatmapRedraw();
+  }, [activeTab, selectedLocation, viewport, simulationResult, simulationVisualizationMode]);
+
   // Initialize Map on mount
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
@@ -527,16 +622,21 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       preferCanvas: false,
     });
 
-    // Custom Layer Panes
+    // Custom Layer Panes (Ensuring points/pins are strictly above heatmap canvas)
     map.createPane("thermalPane");
-    map.getPane("thermalPane")!.style.zIndex = "350";
+    map.getPane("thermalPane")!.style.zIndex = "250";
     map.getPane("thermalPane")!.style.pointerEvents = "none";
+
+    map.createPane("simulationPane");
+    map.getPane("simulationPane")!.style.zIndex = "550";
 
     map.createPane("routePane");
     map.getPane("routePane")!.style.zIndex = "650";
 
     map.createPane("pinPane");
     map.getPane("pinPane")!.style.zIndex = "750";
+
+    simulationGroupRef.current = L.layerGroup([], { pane: "simulationPane" } as any).addTo(map);
 
     const initialTileUrl = mapStyle === "satellite" ? TILE_LAYERS.satellite : TILE_LAYERS.streets;
     const tileLayer = L.tileLayer(initialTileUrl, {
@@ -553,7 +653,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.pointerEvents = "none";
-    canvas.style.zIndex = "450";
+    canvas.style.zIndex = "250";
     map.getContainer().appendChild(canvas);
     canvasOverlayRef.current = canvas;
 

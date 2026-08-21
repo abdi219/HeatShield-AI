@@ -1,4 +1,4 @@
-import { MicroclimatePoint, HeatRiskAssessment } from "@/types";
+import { MicroclimatePoint, HeatRiskAssessment, SimulationInterventions, SimulationResult } from "@/types";
 import { calculateHeatRiskScore } from "./heatRisk";
 
 const FORTYGUARD_API_BASE_URL = process.env.FORTYGUARD_API_BASE_URL || "https://api.fortyguard.com/v1";
@@ -186,6 +186,84 @@ export function getMockHeatData(lat: number, lng: number): { point: Microclimate
   };
 
   return { point, assessment };
+}
+
+/**
+ * Parametric Urban Heat Mitigation Engine (Milestone 5 - Task 5.1)
+ * Calculates empirical microclimate cooling deltas based on urban heat island research:
+ * 1. Urban Tree Canopy: Up to -4.2°C surface cooling via evapotranspiration & leaf shade.
+ * 2. High-Albedo Cool Pavement: Up to -5.8°C surface temperature reduction.
+ * 3. Photovoltaic Solar Canopies: Up to -3.5°C direct solar radiation interception.
+ * 4. Tensile Fabric Shade Sails: Up to -3.0°C localized pedestrian level radiant shade.
+ */
+export function calculateMitigationImpact(
+  baselineSurfaceTemp: number,
+  baselineAmbientTemp: number,
+  interventions: SimulationInterventions,
+  locationName: string = "Urban Sector"
+): SimulationResult {
+  const {
+    treeCanopyCoveragePct,
+    coolPavementAlbedo,
+    solarCanopyCoveragePct,
+    shadeStructureDensityPct,
+  } = interventions;
+
+  // 1. Tree Canopy Cooling: -0.042°C per 1% canopy increase (max -4.2°C at 100%)
+  const canopyDelta = (Math.max(0, Math.min(100, treeCanopyCoveragePct)) / 100) * 4.2;
+
+  // 2. Cool Pavement Albedo: baseline asphalt albedo is ~0.10. Delta from 0.10 up to 0.70 albedo (-0.096°C per 0.01 albedo, max -5.8°C)
+  const excessAlbedo = Math.max(0, Math.min(0.60, coolPavementAlbedo - 0.10));
+  const albedoDelta = (excessAlbedo / 0.60) * 5.8;
+
+  // 3. Solar Canopy Cooling: -0.035°C per 1% solar canopy (max -3.5°C at 100%)
+  const solarDelta = (Math.max(0, Math.min(100, solarCanopyCoveragePct)) / 100) * 3.5;
+
+  // 4. Tensile Shade Sails: -0.030°C per 1% shade density (max -3.0°C at 100%)
+  const shadeDelta = (Math.max(0, Math.min(100, shadeStructureDensityPct)) / 100) * 3.0;
+
+  // Non-linear synergy decay: Interventions partially overlap in solar interception
+  const rawSum = canopyDelta + albedoDelta + solarDelta + shadeDelta;
+  const synergyDampedDelta = rawSum > 0 ? rawSum / (1 + rawSum * 0.045) : 0;
+
+  // Physics bound: Surface temperature cannot drop below local ambient equilibrium
+  const maxPossibleCooling = Math.max(0, baselineSurfaceTemp - baselineAmbientTemp + 0.5);
+  const finalCoolingDelta = Number(Math.min(synergyDampedDelta, maxPossibleCooling).toFixed(1));
+
+  const simulatedSurfaceTemp = Number(Math.max(baselineAmbientTemp - 0.5, baselineSurfaceTemp - finalCoolingDelta).toFixed(1));
+
+  // Recalculate Heat Risk Score for simulated conditions
+  const baselineAssessment = calculateHeatRiskScore({
+    surfaceTempC: baselineSurfaceTemp,
+    ambientTempC: baselineAmbientTemp,
+    canopyCoveragePct: 15,
+  });
+
+  const simulatedAssessment = calculateHeatRiskScore({
+    surfaceTempC: simulatedSurfaceTemp,
+    ambientTempC: baselineAmbientTemp,
+    canopyCoveragePct: Math.min(95, 15 + treeCanopyCoveragePct * 0.7),
+  });
+
+  const heatRiskReduction = Math.max(0, baselineAssessment.score - simulatedAssessment.score);
+
+  // Effective cooling radius based on intervention scale (150m up to 600m)
+  const intensity = (treeCanopyCoveragePct * 0.35 + (excessAlbedo / 0.6) * 100 * 0.35 + solarCanopyCoveragePct * 0.15 + shadeStructureDensityPct * 0.15);
+  const coolingRadius = Math.round(150 + (intensity / 100) * 450);
+
+  return {
+    scenarioId: `sim-${Date.now()}`,
+    locationName,
+    baselineSurfaceTemp,
+    baselineHeatRiskScore: baselineAssessment.score,
+    simulatedSurfaceTemp,
+    simulatedHeatRiskScore: simulatedAssessment.score,
+    temperatureReductionDelta: finalCoolingDelta,
+    heatRiskScoreReductionDelta: heatRiskReduction,
+    estimatedCoolingRadiusMeters: coolingRadius,
+    interventions,
+    disclaimer: "Physics-Based Projections & Empirical Urban Heat Island Models — Not Real-World Guarantees",
+  };
 }
 
 /**
