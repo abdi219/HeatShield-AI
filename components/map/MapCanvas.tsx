@@ -564,16 +564,51 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     const isDelta = simulationVisualizationMode === "delta";
     const isMitigated = simulationVisualizationMode === "mitigated";
 
-    // 1. Intervention Boundary Circle
-    L.circle([centerLat, centerLng], {
-      radius: radius,
-      color: isDelta ? "#10B981" : isMitigated ? "#2B82C9" : "#E87722",
-      weight: 2.5,
-      dashArray: "6, 6",
-      fillColor: isDelta ? "#10B981" : isMitigated ? "#2B82C9" : "#E87722",
-      fillOpacity: isDelta ? 0.18 : 0.08,
-      interactive: false,
-    }).addTo(simulationGroupRef.current);
+    // 1. Intervention Boundary Circle & Concentric Diffusion Contours
+    if (isDelta) {
+      // Outer Contour
+      L.circle([centerLat, centerLng], {
+        radius: radius,
+        color: "#10B981",
+        weight: 2,
+        dashArray: "6, 6",
+        fillColor: "#10B981",
+        fillOpacity: 0.08,
+        interactive: false,
+      }).addTo(simulationGroupRef.current);
+
+      // Mid-Zone Thermal Contour
+      L.circle([centerLat, centerLng], {
+        radius: radius * 0.65,
+        color: "#34D399",
+        weight: 1.5,
+        dashArray: "4, 4",
+        fillColor: "#34D399",
+        fillOpacity: 0.12,
+        interactive: false,
+      }).addTo(simulationGroupRef.current);
+
+      // Core Thermal Reduction Core
+      L.circle([centerLat, centerLng], {
+        radius: radius * 0.35,
+        color: "#6EE7B7",
+        weight: 1.5,
+        dashArray: "3, 3",
+        fillColor: "#6EE7B7",
+        fillOpacity: 0.18,
+        interactive: false,
+      }).addTo(simulationGroupRef.current);
+    } else {
+      L.circle([centerLat, centerLng], {
+        radius: radius,
+        color: isMitigated ? "#2B82C9" : "#E87722",
+        weight: 2.5,
+        dashArray: "6, 6",
+        fillColor: isMitigated ? "#2B82C9" : "#E87722",
+        fillOpacity: 0.08,
+        interactive: false,
+      }).addTo(simulationGroupRef.current);
+    }
 
     // 2. Central Floating Zone Badge (High-Contrast Solid Pill)
     const badgeHtml = `
@@ -622,9 +657,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       preferCanvas: false,
     });
 
-    // Custom Layer Panes (Ensuring points/pins are strictly above heatmap canvas)
+    // Custom Layer Panes (Ensuring points/pins/routes are strictly above heatmap canvas)
     map.createPane("thermalPane");
-    map.getPane("thermalPane")!.style.zIndex = "250";
+    map.getPane("thermalPane")!.style.zIndex = "450";
     map.getPane("thermalPane")!.style.pointerEvents = "none";
 
     map.createPane("simulationPane");
@@ -653,7 +688,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.pointerEvents = "none";
-    canvas.style.zIndex = "250";
+    canvas.style.zIndex = "450";
     map.getContainer().appendChild(canvas);
     canvasOverlayRef.current = canvas;
 

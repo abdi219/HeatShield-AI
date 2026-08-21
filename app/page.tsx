@@ -98,6 +98,16 @@ export default function HomePage() {
     }
   };
 
+  // Auto-dismiss generic toasts after 4.5 seconds
+  useEffect(() => {
+    if (toastAlert && !toastAlert.searchedQuery) {
+      const timer = setTimeout(() => {
+        setToastAlert(null);
+      }, 4500);
+      return () => clearTimeout(timer);
+    }
+  }, [toastAlert, setToastAlert]);
+
   const formatTemp = (tempC: number) =>
     temperatureUnit === "fahrenheit" ? (tempC * 1.8 + 32).toFixed(1) : tempC.toFixed(1);
   const formatDelta = (deltaC: number) =>
@@ -149,42 +159,72 @@ export default function HomePage() {
       <div className="absolute inset-0 w-full h-full">
         <MapCanvas onLocationSelect={handleMapClick} />
 
-        {/* ── Pilot Zone Toast Banner ──────────────────────────────────────── */}
+        {/* ── Toast Notifications & Pilot Zone Alerts ──────────────────────── */}
         {toastAlert && (
-          <div className={`absolute top-20 left-1/2 -translate-x-1/2 z-[1050] max-w-xl w-[92%] sm:w-auto
-            px-5 py-3 rounded-2xl flex flex-col sm:flex-row items-center gap-3
-            animate-in fade-in slide-in-from-top-3 duration-200 ${glassCard}`}
-          >
-            <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 border ${
-              isSatellite ? "bg-white/20 text-white border-white/40" : "bg-slate-100 text-slate-700 border-slate-200"
-            }`}>
-              Pilot Zone Notice
-            </span>
-            <p className={`text-xs font-semibold ${textPrimary}`}>
-              Live microclimate thermal data is active in 4 pilot cities:
-            </p>
-            <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-              {CITY_PRESETS.map((city) => (
+          toastAlert.searchedQuery ? (
+            <div className={`absolute top-20 left-1/2 -translate-x-1/2 z-[1050] max-w-xl w-[92%] sm:w-auto
+              px-5 py-3 rounded-2xl flex flex-col sm:flex-row items-center gap-3
+              animate-in fade-in slide-in-from-top-3 duration-200 ${glassCard}`}
+            >
+              <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 border ${
+                isSatellite ? "bg-white/20 text-white border-white/40" : "bg-slate-100 text-slate-700 border-slate-200"
+              }`}>
+                Pilot Zone Notice
+              </span>
+              <p className={`text-xs font-semibold ${textPrimary}`}>
+                Live microclimate thermal data is active in 4 pilot cities:
+              </p>
+              <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+                {CITY_PRESETS.map((city) => (
+                  <button
+                    key={city.name}
+                    onClick={() => handlePilotCityJump(city.name)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                      isSatellite
+                        ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/40"
+                        : "bg-white hover:bg-slate-900 hover:text-white text-slate-800 border-slate-200"
+                    }`}
+                  >
+                    {city.name}
+                  </button>
+                ))}
                 <button
-                  key={city.name}
-                  onClick={() => handlePilotCityJump(city.name)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
-                    isSatellite
-                      ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/40"
-                      : "bg-white hover:bg-slate-900 hover:text-white text-slate-800 border-slate-200"
+                  onClick={() => setToastAlert(null)}
+                  className={`w-5 h-5 ml-1 rounded-full flex items-center justify-center text-xs font-bold ${
+                    isSatellite ? "text-white hover:bg-white/20" : "text-slate-400 hover:bg-slate-100"
                   }`}
-                >
-                  {city.name}
-                </button>
-              ))}
+                >✕</button>
+              </div>
+            </div>
+          ) : (
+            <div className={`absolute top-20 left-1/2 -translate-x-1/2 z-[1050] max-w-md w-[90%] sm:w-auto
+              px-4 py-2.5 rounded-2xl flex items-center justify-between gap-3 shadow-2xl border
+              animate-in fade-in slide-in-from-top-3 duration-200 ${
+                toastAlert.type === "warning"
+                  ? isSatellite
+                    ? "bg-amber-950/85 backdrop-blur-xl border-amber-400/50 text-amber-100 shadow-amber-950/50"
+                    : "bg-amber-50/95 backdrop-blur-xl border-amber-300 text-amber-950 shadow-lg"
+                  : isSatellite
+                  ? "sat-glass text-white border-white/30"
+                  : "street-card text-slate-900 border-slate-200"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {toastAlert.type === "warning" && (
+                  <span className="text-sm font-bold shrink-0">⚠️</span>
+                )}
+                <span className="text-xs font-semibold">{toastAlert.message}</span>
+              </div>
               <button
                 onClick={() => setToastAlert(null)}
-                className={`w-5 h-5 ml-1 rounded-full flex items-center justify-center text-xs font-bold ${
-                  isSatellite ? "text-white hover:bg-white/20" : "text-slate-400 hover:bg-slate-100"
+                className={`text-xs font-bold p-1 rounded-lg ml-2 transition-all ${
+                  isSatellite ? "hover:bg-white/20 text-white/80" : "hover:bg-slate-200 text-slate-600"
                 }`}
-              >✕</button>
+              >
+                ✕
+              </button>
             </div>
-          </div>
+          )
         )}
 
         {/* ── Left Dock: Thermal Layers / Route Finder / What-If Simulator ──── */}

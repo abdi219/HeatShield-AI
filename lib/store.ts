@@ -4,6 +4,7 @@ import {
   AnalyzedRoute, 
   SimulationInterventions, 
   SimulationResult, 
+  SavedScenario,
   AIChatMessage, 
   TemperatureUnit 
 } from '@/types';
@@ -88,6 +89,10 @@ interface AppState {
   setSimulationResult: (result: SimulationResult | null) => void;
   simulationVisualizationMode: 'mitigated' | 'baseline' | 'delta';
   setSimulationVisualizationMode: (mode: 'mitigated' | 'baseline' | 'delta') => void;
+  savedScenarios: SavedScenario[];
+  saveCurrentScenario: (name?: string) => void;
+  loadScenario: (scenario: SavedScenario) => void;
+  deleteScenario: (id: string) => void;
   isSimulating: boolean;
   setIsSimulating: (isSimulating: boolean) => void;
 
@@ -191,6 +196,37 @@ export const useAppStore = create<AppState>((set) => ({
   setSimulationResult: (simulationResult) => set({ simulationResult }),
   simulationVisualizationMode: 'mitigated',
   setSimulationVisualizationMode: (simulationVisualizationMode) => set({ simulationVisualizationMode }),
+  savedScenarios: [],
+  saveCurrentScenario: (customName) => set((state) => {
+    if (!state.simulationResult) return state;
+    const newScenario: SavedScenario = {
+      id: `scen-${Date.now()}`,
+      name: customName?.trim() || `Mitigation Plan (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`,
+      timestamp: new Date().toISOString(),
+      cityName: state.selectedCity,
+      locationName: state.simulationResult.locationName,
+      lat: state.selectedLocation ? state.selectedLocation.lat : state.viewport.lat,
+      lng: state.selectedLocation ? state.selectedLocation.lng : state.viewport.lng,
+      interventions: { ...state.simulationInterventions },
+      result: { ...state.simulationResult },
+    };
+    return { savedScenarios: [newScenario, ...state.savedScenarios] };
+  }),
+  loadScenario: (scenario) => set({
+    selectedCity: scenario.cityName,
+    simulationInterventions: { ...scenario.interventions },
+    simulationResult: { ...scenario.result },
+    viewport: {
+      lat: scenario.lat,
+      lng: scenario.lng,
+      zoom: 15,
+      pitch: 0,
+      bearing: 0,
+    },
+  }),
+  deleteScenario: (id) => set((state) => ({
+    savedScenarios: state.savedScenarios.filter((s) => s.id !== id),
+  })),
   isSimulating: false,
   setIsSimulating: (isSimulating) => set({ isSimulating }),
 

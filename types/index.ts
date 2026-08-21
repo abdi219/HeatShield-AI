@@ -106,6 +106,18 @@ export interface SimulationResult {
   disclaimer: string;
 }
 
+export interface SavedScenario {
+  id: string;
+  name: string;
+  timestamp: string;
+  cityName: string;
+  locationName: string;
+  lat: number;
+  lng: number;
+  interventions: SimulationInterventions;
+  result: SimulationResult;
+}
+
 export interface AIChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
