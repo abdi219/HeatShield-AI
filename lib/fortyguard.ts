@@ -39,35 +39,68 @@ function spatialHash(lat: number, lng: number, seed: number = 0): number {
  * - Urban residential / moderate canopy: ambientTemp + 3.0°C to + 6.0°C
  * - Unshaded impervious asphalt arterials & parking lots: ambientTemp + 7.0°C to + 11.0°C
  */
+/**
+ * Dynamic Climate-Calibrated Urban Spatial Microclimate Model with Diurnal Solar Cycle
+ * Ground surface temperature dynamically couples to real-time local solar hour:
+ * - Night (10 PM – 6 AM): Ambient drops to 22°C–27°C, no solar radiation, residual UHI +1°C to +2.5°C
+ * - Morning (7 AM – 11 AM): Solar irradiance ramps up, ground absorbs heat
+ * - Peak Afternoon (1 PM – 5 PM): Peak solar irradiance (+6°C to +11°C asphalt absorption)
+ * - Shaded green corridors & water bodies provide persistent cooling (-2°C to -6°C)
+ */
 function calculateUrbanHeatDispersion(lat: number, lng: number): {
   surfaceTempC: number;
   ambientTempC: number;
   canopyPct: number;
 } {
-  // 1. Regional baseline ambient temperature calibration based on geographic longitude & latitude
-  let regionalAmbient = 32.0;
+  // 1. Calculate Real-Time Local Solar Hour for this Longitude
+  const now = new Date();
+  const utcHours = now.getUTCHours() + now.getUTCMinutes() / 60;
+  const localSolarHour = (utcHours + (lng / 15) + 24) % 24;
 
-  if (lng < -110 && lat < 35) {
-    // Sonoran Desert Valley (Phoenix): Higher ambient baseline (~36.0°C)
-    regionalAmbient = 36.5;
-  } else if (lat < 27) {
-    // Subtropical Coastal (Miami): (~32.5°C)
-    regionalAmbient = 32.5;
-  } else if (lat > 33 && lng > -103 && lng < -100) {
-    // Elevated Plains (Lubbock / West Texas): (~28.5°C)
-    regionalAmbient = 28.5;
-  } else if (lat > 29 && lat < 32) {
-    // Central Texas (Austin): (~33.0°C)
-    regionalAmbient = 33.0;
-  } else if (lat > 35 && lng < -114) {
-    // Mojave Desert (Las Vegas): (~37.0°C)
-    regionalAmbient = 37.0;
-  } else {
-    // General US Southern tier baseline
-    regionalAmbient = 30.5 + Math.sin(lat * 5.0) * 2.0;
+  // Diurnal sinusoidal temperature curve (Daily low at ~06:00 sunrise, Daily peak at ~15:30 afternoon)
+  const diurnalAngle = ((localSolarHour - 9.5) / 24) * 2 * Math.PI;
+  const diurnalFactor = Math.max(0, Math.min(1, (Math.sin(diurnalAngle) + 1) / 2)); // 0.0 (night) to 1.0 (afternoon peak)
+
+  // Direct Solar Irradiance Curve (0.0 at night, 1.0 at midday)
+  let solarIrradianceFactor = 0;
+  if (localSolarHour >= 6.5 && localSolarHour <= 19.5) {
+    const sunAngle = ((localSolarHour - 6.5) / 13.0) * Math.PI;
+    solarIrradianceFactor = Math.pow(Math.sin(sunAngle), 1.2);
   }
 
-  // 2. Micro-scale street grid and building density
+  // 2. City-Specific Diurnal Temperature Boundaries [Night Min, Afternoon Max]
+  let minTemp = 20.0;
+  let maxTemp = 34.0;
+
+  if (lng < -110 && lat < 35) {
+    // Phoenix (Sonoran Desert): 24°C night -> 41.5°C afternoon
+    minTemp = 24.5;
+    maxTemp = 41.5;
+  } else if (lat < 27) {
+    // Miami (Subtropical Coastal): 24.5°C night -> 33.5°C afternoon
+    minTemp = 24.5;
+    maxTemp = 33.5;
+  } else if (lat > 33 && lng > -103 && lng < -100) {
+    // Lubbock / West Texas (Elevated Plains): 19.0°C night -> 33.0°C afternoon
+    minTemp = 19.0;
+    maxTemp = 33.0;
+  } else if (lat > 29 && lat < 32) {
+    // Austin (Central Texas): 23.0°C night -> 38.0°C afternoon
+    minTemp = 23.0;
+    maxTemp = 38.0;
+  } else if (lat > 35 && lng < -114) {
+    // Las Vegas (Mojave Desert): 25.0°C night -> 42.0°C afternoon
+    minTemp = 25.0;
+    maxTemp = 42.0;
+  } else {
+    // General US Baseline
+    minTemp = 18.0 + Math.sin(lat * 5.0) * 2.0;
+    maxTemp = 32.0 + Math.sin(lat * 5.0) * 3.0;
+  }
+
+  const regionalAmbient = minTemp + (maxTemp - minTemp) * diurnalFactor;
+
+  // 3. Micro-scale street grid and building density
   const scale = 240.0;
   const gridX = Math.abs(Math.sin(lng * scale * Math.PI));
   const gridY = Math.abs(Math.cos(lat * scale * Math.PI));
@@ -76,7 +109,7 @@ function calculateUrbanHeatDispersion(lat: number, lng: number): {
   const macroNoise = (spatialHash(lat, lng, 1) + spatialHash(lat * 2, lng * 2, 2) * 0.5) / 1.5;
   const urbanDensity = Math.max(0.1, Math.min(1.0, streetAsphaltFactor * 0.65 + macroNoise * 0.35));
 
-  // 3. Proximity cooling to landmark parks and water corridors
+  // 4. Proximity cooling to landmark parks and water corridors
   let parkCooling = 0;
   let parkCanopyBonus = 0;
 
@@ -92,18 +125,23 @@ function calculateUrbanHeatDispersion(lat: number, lng: number): {
     }
   }
 
-  // 4. Localized canopy coverage %
+  // 5. Localized canopy coverage %
   const baseCanopy = Math.max(8, Math.min(75, (1 - urbanDensity) * 60 + parkCanopyBonus));
   const canopyPct = Math.round(Math.min(90, baseCanopy));
 
-  // 5. Physically grounded Surface Temperature Calculation:
-  // Asphalt absorption: +3.0°C in low-density up to +9.5°C on heavy asphalt
-  // Evapotranspiration cooling: -2.5°C under high canopy
-  const asphaltAbsorption = 2.5 + urbanDensity * 7.5;
-  const canopyCooling = (canopyPct / 100) * 3.2;
+  // 6. Physically grounded Surface Temperature with Solar Coupling:
+  // - Direct Sun Heating: (urbanDensity * 8.5°C) * solarIrradianceFactor
+  // - Night Urban Heat Island Retention: urbanDensity * 2.0°C (thermal mass)
+  // - Evapotranspiration cooling: -2.5°C under high canopy during daytime
+  const solarDirectHeat = (1.5 + urbanDensity * 8.5) * solarIrradianceFactor;
+  const nightUhiRetention = (0.6 + urbanDensity * 1.8) * (1 - solarIrradianceFactor);
+  const asphaltAbsorption = solarDirectHeat + nightUhiRetention;
+  
+  const canopyCooling = (canopyPct / 100) * (1.2 + 2.4 * solarIrradianceFactor);
+  const effectiveParkCooling = parkCooling * (0.6 + 0.4 * solarIrradianceFactor);
 
-  const rawSurfaceTemp = regionalAmbient + asphaltAbsorption - canopyCooling - parkCooling;
-  const surfaceTempC = Number(Math.max(20.0, Math.min(48.0, rawSurfaceTemp)).toFixed(1));
+  const rawSurfaceTemp = regionalAmbient + asphaltAbsorption - canopyCooling - effectiveParkCooling;
+  const surfaceTempC = Number(Math.max(16.0, Math.min(49.0, rawSurfaceTemp)).toFixed(1));
   const ambientTempC = Number(regionalAmbient.toFixed(1));
 
   return { surfaceTempC, ambientTempC, canopyPct };
@@ -138,7 +176,8 @@ export function getMockHeatData(lat: number, lng: number): { point: Microclimate
 }
 
 /**
- * Uniform Square Spatial Grid Generator
+ * High-Density Metropolitan Spatial Grid Generator (36x36 = 1,296 nodes)
+ * Provides 100% continuous, gapless coverage across the entire city and suburbs.
  */
 export function getMockHeatGrid(
   swLat: number,
@@ -151,11 +190,12 @@ export function getMockHeatGrid(
   const midLat = (swLat + neLat) / 2;
   const cosLat = Math.cos((midLat * Math.PI) / 180);
   
-  const latSteps = 24;
+  // High-density 36x36 spatial grid for seamless city-wide coverage
+  const latSteps = 36;
   const stepLat = (neLat - swLat) / latSteps;
   
   const idealStepLng = stepLat / Math.max(0.15, cosLat);
-  const lngSteps = Math.max(12, Math.round((neLng - swLng) / idealStepLng));
+  const lngSteps = Math.max(20, Math.round((neLng - swLng) / idealStepLng));
   const actualStepLng = (neLng - swLng) / lngSteps;
 
   for (let i = 0; i <= latSteps; i++) {
@@ -164,8 +204,6 @@ export function getMockHeatGrid(
       const lng = swLng + j * actualStepLng;
       
       const { point, assessment } = getMockHeatData(lat, lng);
-      // Normalized temperature weight (22°C = 0.0, 44°C = 1.0)
-      const weight = Math.max(0.05, Math.min(1.0, (point.surfaceTempCelsius - 22) / 22));
 
       features.push({
         type: "Feature",
@@ -180,7 +218,6 @@ export function getMockHeatGrid(
           hrsScore: assessment.score,
           hrsLevel: assessment.level,
           canopyPct: point.canopyCoveragePct,
-          weight,
           source: point.source,
         },
       });

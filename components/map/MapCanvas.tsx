@@ -171,8 +171,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
 
     const zoom = map.getZoom();
 
-    // Zoom-adaptive brush radius for seamless full-coverage blending without zebra stripes
-    const baseRadius = zoom <= 11 ? 110 : zoom <= 13 ? 88 : zoom <= 15 ? 70 : 52;
+    // Scale brush radius dynamically with screen dimensions to guarantee 100% gapless metropolitan coverage
+    const nodeScreenDist = Math.max(24, size.x / 28);
+    const baseRadius = Math.max(52, Math.min(135, nodeScreenDist * 1.95));
     const brush = createRadialBrush(baseRadius);
     const brushHalf = baseRadius;
 
@@ -199,7 +200,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
         normalizedWeight = Math.max(0.15, Math.min(1.0, (100 - canopy) / 100));
       } else {
         const temp = feature.properties?.surfaceTemp ?? 34;
-        normalizedWeight = Math.max(0.15, Math.min(1.0, (temp - 22) / 22));
+        normalizedWeight = Math.max(0.15, Math.min(1.0, (temp - 20) / 24));
       }
 
       ctx.globalAlpha = Math.min(1.0, normalizedWeight * 0.95);
@@ -249,15 +250,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     requestHeatmapRedraw();
   }, [requestHeatmapRedraw]);
 
-  // Load FortyGuard Microclimate Grid with Instant Client-Side Cache
+  // Load Microclimate Grid with Wide Metropolitan Buffer
   const loadHeatGrid = useCallback(async (map: L.Map) => {
     try {
       const bounds = map.getBounds();
       const sw = bounds.getSouthWest();
       const ne = bounds.getNorthEast();
 
-      const latBuffer = (ne.lat - sw.lat) * 0.35;
-      const lngBuffer = (ne.lng - sw.lng) * 0.35;
+      // Wide 1.2x metropolitan buffer covers entire city seamlessly
+      const latBuffer = Math.max(0.04, (ne.lat - sw.lat) * 1.2);
+      const lngBuffer = Math.max(0.04, (ne.lng - sw.lng) * 1.2);
 
       const swLat = Math.max(-85, sw.lat - latBuffer);
       const swLng = Math.max(-180, sw.lng - lngBuffer);
@@ -287,7 +289,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       rawGridDataRef.current = geojson;
       requestHeatmapRedraw();
     } catch (err) {
-      console.warn("Error rendering FortyGuard heat grid:", err);
+      console.warn("Error rendering heat grid:", err);
     } finally {
       setIsLoadingGrid(false);
     }
@@ -341,94 +343,132 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     }
   };
 
-  // Render Dual Route Lines
+  // Render Dual Route Lines and Point (A)/(B) Markers
   const renderRoutes = useCallback((map: L.Map) => {
-    if (!routeGroupRef.current) {
-      routeGroupRef.current = L.layerGroup().addTo(map);
-    }
-    routeGroupRef.current.clearLayers();
+    if (!map) return;
 
-    if (activeTab !== "routes" || (!fastestRoute && !coolRoute)) {
+    if (!routeGroupRef.current || !map.hasLayer(routeGroupRef.current)) {
+      if (routeGroupRef.current) {
+        routeGroupRef.current.clearLayers();
+        try { map.removeLayer(routeGroupRef.current); } catch {}
+      }
+      routeGroupRef.current = L.layerGroup().addTo(map);
+    } else {
+      routeGroupRef.current.clearLayers();
+    }
+
+    if (activeTab !== "routes") {
+      return;
+    }
+
+    // 1. Always Render Origin Pin (A) if available
+    if (origin && typeof origin.lat === "number" && typeof origin.lng === "number") {
+      const iconA = L.divIcon({
+        className: "custom-marker-a",
+        html: `<div style="position:relative;width:32px;height:32px;border-radius:50%;background:#0F172A;color:#FFFFFF;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;border:3px solid #FFFFFF;box-shadow:0 8px 24px rgba(0,0,0,0.6);"><span style="position:absolute;inset:-4px;border-radius:50%;border:2px solid #38BDF8;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;opacity:0.6;"></span>A</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+      L.marker([origin.lat, origin.lng], { icon: iconA, interactive: false, zIndexOffset: 1000 }).addTo(routeGroupRef.current);
+    }
+
+    // 2. Always Render Destination Pin (B) if available
+    if (destination && typeof destination.lat === "number" && typeof destination.lng === "number") {
+      const iconB = L.divIcon({
+        className: "custom-marker-b",
+        html: `<div style="position:relative;width:32px;height:32px;border-radius:50%;background:#D9381E;color:#FFFFFF;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;border:3px solid #FFFFFF;box-shadow:0 8px 24px rgba(217,56,30,0.7);"><span style="position:absolute;inset:-4px;border-radius:50%;border:2px solid #F87171;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;opacity:0.6;"></span>B</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+      L.marker([destination.lat, destination.lng], { icon: iconB, interactive: false, zIndexOffset: 1000 }).addTo(routeGroupRef.current);
+    }
+
+    // If no calculated routes yet, fit bounds to pins if both exist
+    if (!fastestRoute && !coolRoute) {
+      if (origin && destination) {
+        const bounds = L.latLngBounds([[origin.lat, origin.lng], [destination.lat, destination.lng]]);
+        map.fitBounds(bounds, { paddingTopLeft: [420, 60], paddingBottomRight: [60, 60], maxZoom: 15, animate: true });
+      }
       return;
     }
 
     const isCoolSelected = selectedRouteId === "cool";
+    let allRouteCoords: L.LatLngTuple[] = [];
 
+    // 3. Render Direct (Fastest GPS) Route Polylines
     if (fastestRoute && fastestRoute.geometry?.coordinates?.length) {
       const latlngs: L.LatLngTuple[] = fastestRoute.geometry.coordinates.map(
         (c: [number, number]) => [c[1], c[0]] as L.LatLngTuple
       );
+      allRouteCoords = allRouteCoords.concat(latlngs);
 
+      // Outer White Casing
       L.polyline(latlngs, {
         color: "#FFFFFF",
-        weight: !isCoolSelected ? 11 : 8,
+        weight: !isCoolSelected ? 12 : 7,
         opacity: 0.95,
         lineCap: "round",
         lineJoin: "round",
       }).addTo(routeGroupRef.current);
 
-      L.polyline(latlngs, {
+      // Inner Dashed Hot Coral Polyline
+      const fastestLine = L.polyline(latlngs, {
         color: "#E87722",
-        weight: !isCoolSelected ? 6 : 4,
-        opacity: !isCoolSelected ? 1.0 : 0.75,
-        dashArray: "6, 6",
+        weight: !isCoolSelected ? 7 : 4,
+        opacity: !isCoolSelected ? 1.0 : 0.7,
+        dashArray: "7, 7",
         lineCap: "round",
         lineJoin: "round",
       }).addTo(routeGroupRef.current);
+
+      fastestLine.on("click", () => {
+        useAppStore.getState().setSelectedRouteId("fastest");
+      });
     }
 
+    // 4. Render Cool Recommended Route Polylines
     if (coolRoute && coolRoute.geometry?.coordinates?.length) {
       const latlngs: L.LatLngTuple[] = coolRoute.geometry.coordinates.map(
         (c: [number, number]) => [c[1], c[0]] as L.LatLngTuple
       );
+      allRouteCoords = allRouteCoords.concat(latlngs);
 
+      // Outer White Casing
       L.polyline(latlngs, {
         color: "#FFFFFF",
-        weight: isCoolSelected ? 12 : 8.5,
+        weight: isCoolSelected ? 13 : 7.5,
         opacity: 0.95,
         lineCap: "round",
         lineJoin: "round",
       }).addTo(routeGroupRef.current);
 
-      L.polyline(latlngs, {
+      // Inner Solid Sapphire Blue Polyline
+      const coolLine = L.polyline(latlngs, {
         color: "#2B82C9",
-        weight: isCoolSelected ? 7 : 4.5,
-        opacity: isCoolSelected ? 1.0 : 0.75,
+        weight: isCoolSelected ? 8 : 4.5,
+        opacity: isCoolSelected ? 1.0 : 0.7,
         lineCap: "round",
         lineJoin: "round",
       }).addTo(routeGroupRef.current);
 
-      const bounds = L.latLngBounds(latlngs);
+      coolLine.on("click", () => {
+        useAppStore.getState().setSelectedRouteId("cool");
+      });
+    }
+
+    // 5. Auto-Fit Camera to Entire Route Corridor
+    if (allRouteCoords.length > 0) {
+      const bounds = L.latLngBounds(allRouteCoords);
       if (origin) bounds.extend([origin.lat, origin.lng]);
       if (destination) bounds.extend([destination.lat, destination.lng]);
 
       const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
       map.fitBounds(bounds, {
-        paddingTopLeft: isMobile ? [40, 40] : [420, 60],
-        paddingBottomRight: isMobile ? [40, 40] : [60, 60],
+        paddingTopLeft: isMobile ? [40, 40] : [430, 80],
+        paddingBottomRight: isMobile ? [40, 40] : [60, 80],
         maxZoom: 16,
         animate: true,
       });
-    }
-
-    if (origin && typeof origin.lat === "number" && typeof origin.lng === "number") {
-      const iconA = L.divIcon({
-        className: "custom-marker-a",
-        html: `<div style="width:28px;height:28px;border-radius:50%;background:#0F172A;color:#FFFFFF;font-weight:bold;font-size:12px;display:flex;align-items:center;justify-content:center;border:2.5px solid #FFFFFF;box-shadow:0 10px 15px -3px rgba(0,0,0,0.4);">A</div>`,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
-      });
-      L.marker([origin.lat, origin.lng], { icon: iconA, interactive: false }).addTo(routeGroupRef.current);
-    }
-
-    if (destination && typeof destination.lat === "number" && typeof destination.lng === "number") {
-      const iconB = L.divIcon({
-        className: "custom-marker-b",
-        html: `<div style="width:28px;height:28px;border-radius:50%;background:#D9381E;color:#FFFFFF;font-weight:bold;font-size:12px;display:flex;align-items:center;justify-content:center;border:2.5px solid #FFFFFF;box-shadow:0 10px 15px -3px rgba(0,0,0,0.4);">B</div>`,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
-      });
-      L.marker([destination.lat, destination.lng], { icon: iconB, interactive: false }).addTo(routeGroupRef.current);
     }
   }, [activeTab, fastestRoute, coolRoute, selectedRouteId, origin, destination]);
 
@@ -441,8 +481,19 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       zoom: viewport.zoom,
       zoomControl: false,
       attributionControl: false,
-      preferCanvas: true,
+      preferCanvas: false,
     });
+
+    // Custom Layer Panes
+    map.createPane("thermalPane");
+    map.getPane("thermalPane")!.style.zIndex = "350";
+    map.getPane("thermalPane")!.style.pointerEvents = "none";
+
+    map.createPane("routePane");
+    map.getPane("routePane")!.style.zIndex = "650";
+
+    map.createPane("pinPane");
+    map.getPane("pinPane")!.style.zIndex = "750";
 
     const initialTileUrl = mapStyle === "satellite" ? TILE_LAYERS.satellite : TILE_LAYERS.streets;
     const tileLayer = L.tileLayer(initialTileUrl, {
@@ -459,8 +510,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.pointerEvents = "none";
-    canvas.style.zIndex = "400";
-    mapContainerRef.current.appendChild(canvas);
+    map.getPane("thermalPane")!.appendChild(canvas);
     canvasOverlayRef.current = canvas;
 
     resizeCanvas();
@@ -534,6 +584,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       map.invalidateSize();
       resizeCanvas();
       loadHeatGrid(map);
+      renderRoutes(map);
     }, 100);
 
     return () => {
@@ -543,6 +594,15 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       if (canvasOverlayRef.current && canvasOverlayRef.current.parentNode) {
         canvasOverlayRef.current.parentNode.removeChild(canvasOverlayRef.current);
         canvasOverlayRef.current = null;
+      }
+      if (routeGroupRef.current) {
+        routeGroupRef.current.clearLayers();
+        try { routeGroupRef.current.remove(); } catch {}
+        routeGroupRef.current = null;
+      }
+      if (clickPinRef.current) {
+        clickPinRef.current.remove();
+        clickPinRef.current = null;
       }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
