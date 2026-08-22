@@ -7,6 +7,7 @@ import { CITY_PRESETS } from "@/lib/constants";
 import { TopNav } from "@/components/hud/TopNav";
 import { RouteFinder } from "@/components/routes/RouteFinder";
 import { WhatIfSimulator } from "@/components/simulator/WhatIfSimulator";
+import { AIAssistantDrawer } from "@/components/ai/AIAssistantDrawer";
 import { Layers, Flame, Trees, ChevronRight, Sparkles, MapPin } from "lucide-react";
 
 const MapCanvas = dynamic(
@@ -498,6 +499,9 @@ export default function HomePage() {
             )}
           </div>
         </div>
+
+        {/* ── AI Assistant Drawer (Milestone 6) ───────────────────────────── */}
+        <AIAssistantDrawer />
       </div>
     </main>
   );

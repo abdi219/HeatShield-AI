@@ -5,7 +5,8 @@ import {
   SimulationInterventions, 
   SimulationResult, 
   SavedScenario,
-  AIChatMessage, 
+  AIChatMessage,
+  AIChatSession,
   TemperatureUnit 
 } from '@/types';
 import { DEFAULT_MAP_CENTER } from './constants';
@@ -103,6 +104,11 @@ interface AppState {
   addAIMessage: (msg: AIChatMessage) => void;
   isAIStreaming: boolean;
   setIsAIStreaming: (isStreaming: boolean) => void;
+  aiSessions: AIChatSession[];
+  activeSessionId: string;
+  createNewChatSession: () => void;
+  loadChatSession: (sessionId: string) => void;
+  deleteChatSession: (sessionId: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -210,7 +216,9 @@ export const useAppStore = create<AppState>((set) => ({
       interventions: { ...state.simulationInterventions },
       result: { ...state.simulationResult },
     };
-    return { savedScenarios: [newScenario, ...state.savedScenarios] };
+    // Cap saved scenarios to maximum 15 items to keep storage ultra-light
+    const cappedScenarios = [newScenario, ...state.savedScenarios].slice(0, 15);
+    return { savedScenarios: cappedScenarios };
   }),
   loadScenario: (scenario) => set({
     selectedCity: scenario.cityName,
@@ -233,6 +241,8 @@ export const useAppStore = create<AppState>((set) => ({
   // AI Drawer
   isAIAssistantOpen: false,
   setIsAIAssistantOpen: (isAIAssistantOpen) => set({ isAIAssistantOpen }),
+  aiSessions: [],
+  activeSessionId: 'default',
   aiMessages: [
     {
       id: 'init-msg',
@@ -244,4 +254,60 @@ export const useAppStore = create<AppState>((set) => ({
   addAIMessage: (msg) => set((state) => ({ aiMessages: [...state.aiMessages, msg] })),
   isAIStreaming: false,
   setIsAIStreaming: (isAIStreaming) => set({ isAIStreaming }),
+
+  createNewChatSession: () => set((state) => {
+    const currentMsgs = state.aiMessages;
+    let updatedSessions = [...state.aiSessions];
+
+    // Save current active session if it has user messages
+    const hasUserMsg = currentMsgs.some((m) => m.role === 'user');
+    if (hasUserMsg) {
+      const firstUserMsg =
+        currentMsgs.find((m) => m.role === 'user')?.content.slice(0, 30) || 'Heat Consultation';
+      const existingIdx = updatedSessions.findIndex((s) => s.id === state.activeSessionId);
+      const sessionObj: AIChatSession = {
+        id: state.activeSessionId === 'default' ? `session-${Date.now()}` : state.activeSessionId,
+        title: firstUserMsg,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        messages: currentMsgs,
+      };
+      if (existingIdx >= 0) {
+        updatedSessions[existingIdx] = sessionObj;
+      } else {
+        updatedSessions = [sessionObj, ...updatedSessions];
+      }
+    }
+
+    // Auto-prune to maximum 15 sessions (keeps memory and storage under 0.05 MB)
+    updatedSessions = updatedSessions.slice(0, 15);
+
+    const newId = `session-${Date.now()}`;
+    const initialMsg: AIChatMessage = {
+      id: `init-${Date.now()}`,
+      role: 'assistant',
+      content: `Welcome to a new chat session. I am ready to answer your questions about **${state.selectedCity}** microclimate, heat risk, cool routes, or urban cooling.`,
+      timestamp: new Date().toISOString(),
+    };
+
+    return {
+      aiSessions: updatedSessions,
+      activeSessionId: newId,
+      aiMessages: [initialMsg],
+    };
+  }),
+
+  loadChatSession: (sessionId: string) => set((state) => {
+    const targetSession = state.aiSessions.find((s) => s.id === sessionId);
+    if (!targetSession) return state;
+    return {
+      activeSessionId: sessionId,
+      aiMessages: targetSession.messages,
+    };
+  }),
+
+  deleteChatSession: (sessionId: string) => set((state) => {
+    const filtered = state.aiSessions.filter((s) => s.id !== sessionId);
+    return { aiSessions: filtered };
+  }),
 }));

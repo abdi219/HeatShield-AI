@@ -131,6 +131,14 @@ export interface AIChatMessage {
   };
 }
 
+export interface AIChatSession {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: AIChatMessage[];
+}
+
 export interface CityPreset {
   name: string;
   state: string;
