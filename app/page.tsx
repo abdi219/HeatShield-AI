@@ -8,6 +8,7 @@ import { TopNav } from "@/components/hud/TopNav";
 import { RouteFinder } from "@/components/routes/RouteFinder";
 import { WhatIfSimulator } from "@/components/simulator/WhatIfSimulator";
 import { AIAssistantDrawer } from "@/components/ai/AIAssistantDrawer";
+import { DocsShowcase } from "@/components/docs/DocsShowcase";
 import { Layers, Flame, Trees, ChevronRight, Sparkles, MapPin } from "lucide-react";
 
 const MapCanvas = dynamic(
@@ -502,6 +503,9 @@ export default function HomePage() {
 
         {/* ── AI Assistant Drawer (Milestone 6) ───────────────────────────── */}
         <AIAssistantDrawer />
+
+        {/* ── Documentation & Pitch Showcase (Milestone 7) ────────────────── */}
+        <DocsShowcase />
       </div>
     </main>
   );
