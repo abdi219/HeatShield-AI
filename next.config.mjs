@@ -1,13 +1,13 @@
 /** @type {import('next').NextConfig} */
 const cspHeader = `
   default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:;
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://unpkg.com;
   worker-src 'self' blob:;
   child-src 'self' blob:;
-  style-src 'self' 'unsafe-inline' https://api.mapbox.com https://fonts.googleapis.com;
-  img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
+  img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://server.arcgisonline.com https://*.tile.openstreetmap.org https://unpkg.com https://cdnjs.cloudflare.com https://*.arcgisonline.com;
   font-src 'self' data: https://fonts.gstatic.com;
-  connect-src 'self' https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com https://*.supabase.co https://api.groq.com;
+  connect-src 'self' https://nominatim.openstreetmap.org https://router.project-osrm.org https://api.open-meteo.com https://api.groq.com https://api.fortyguard.com https://*.supabase.co;
   frame-ancestors 'none';
 `.replace(/\s{2,}/g, ' ').trim();
 
