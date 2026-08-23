@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { fetchFortyGuardGrid } from "@/lib/fortyguard";
 
+export const dynamic = "force-dynamic";
+
 const GridQuerySchema = z.object({
   swLat: z.coerce.number().transform((v) => Math.max(-85, Math.min(85, v))),
   swLng: z.coerce.number().transform((v) => Math.max(-180, Math.min(180, v))),

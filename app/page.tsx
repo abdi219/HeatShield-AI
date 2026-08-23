@@ -10,6 +10,7 @@ import { WhatIfSimulator } from "@/components/simulator/WhatIfSimulator";
 import { AIAssistantDrawer } from "@/components/ai/AIAssistantDrawer";
 import { DocsShowcase } from "@/components/docs/DocsShowcase";
 import { MobileBottomDock } from "@/components/hud/MobileBottomDock";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { Layers, Flame, Trees, ChevronRight, Sparkles, MapPin } from "lucide-react";
 
 const MapCanvas = dynamic(
@@ -169,7 +170,9 @@ export default function HomePage() {
       <TopNav />
 
       <div className="absolute inset-0 w-full h-full">
-        <MapCanvas onLocationSelect={handleMapClick} />
+        <ErrorBoundary fallbackTitle="Map Rendering Unavailable" fallbackMessage="The spatial map canvas encountered a rendering issue. Click retry to reload.">
+          <MapCanvas onLocationSelect={handleMapClick} />
+        </ErrorBoundary>
 
         {/* ── Toast Notifications & Pilot Zone Alerts ──────────────────────── */}
         {toastAlert && (

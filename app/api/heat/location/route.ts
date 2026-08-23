@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { fetchFortyGuardLocation } from "@/lib/fortyguard";
 
+export const dynamic = "force-dynamic";
+
 const LocationQuerySchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),

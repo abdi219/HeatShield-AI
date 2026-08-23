@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 const cache = new Map<string, { data: any; expiresAt: number }>();
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes cache
 

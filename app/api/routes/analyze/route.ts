@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { analyzeRoutes } from "@/lib/routing";
 
+export const dynamic = "force-dynamic";
+
 const RouteRequestSchema = z.object({
   origin: z.object({
     lat: z.coerce.number().min(-90).max(90),

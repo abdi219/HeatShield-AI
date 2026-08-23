@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { buildGroundedSystemPrompt, AIRequestContext } from "@/lib/aiContext";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "openai/gpt-oss-120b"; // Active 120B model on Groq
