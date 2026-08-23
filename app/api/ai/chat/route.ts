@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
 
     const latestUserMessage = messages[messages.length - 1]?.content || "";
     const systemPrompt = buildGroundedSystemPrompt(context);
-    const apiKey = process.env.GROQ_API_KEY?.trim();
+    const apiKey = process.env.GROQ_API_KEY?.trim() || process.env.AI_API_KEY?.trim();
 
     // If Groq API Key is available, invoke Groq with streaming
     if (apiKey && apiKey.startsWith("gsk_")) {
