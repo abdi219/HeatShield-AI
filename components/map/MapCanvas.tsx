@@ -912,8 +912,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
         <button
           onClick={toggleHeatmapVisibility}
           className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-md transition-all duration-200 ${isHeatmapVisible
-              ? isSatellite ? "bg-white text-slate-950 font-extrabold" : "bg-slate-900 text-white"
-              : isSatellite ? "sat-glass text-white" : "street-card text-slate-800"
+            ? isSatellite ? "bg-white text-slate-950 font-extrabold" : "bg-slate-900 text-white"
+            : isSatellite ? "sat-glass text-white" : "street-card text-slate-800"
             }`}
           title="Toggle Thermal Heatmap Overlay"
         >
@@ -926,8 +926,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
           <button
             onClick={() => setMapStyle("streets")}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mapStyle === "streets"
-                ? "bg-slate-900 text-white"
-                : isSatellite ? "text-white/85 hover:bg-white/20" : "text-slate-600 hover:bg-slate-100"
+              ? "bg-slate-900 text-white"
+              : isSatellite ? "text-white/85 hover:bg-white/20" : "text-slate-600 hover:bg-slate-100"
               }`}
           >
             Street
@@ -935,8 +935,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
           <button
             onClick={() => setMapStyle("satellite")}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${mapStyle === "satellite"
-                ? "bg-white text-slate-950 font-extrabold"
-                : isSatellite ? "text-white/85 hover:bg-white/20" : "text-slate-600 hover:bg-slate-100"
+              ? "bg-white text-slate-950 font-extrabold"
+              : isSatellite ? "text-white/85 hover:bg-white/20" : "text-slate-600 hover:bg-slate-100"
               }`}
           >
             Satellite
@@ -945,7 +945,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       </div>
 
       {/* Zoom Controls (Bottom-Right) */}
-      <div className="absolute bottom-5 right-5 z-[1000] flex flex-col items-center gap-1.5">
+      <div className="absolute bottom-20 right-3.5 md:bottom-5 md:right-5 z-[1000] flex flex-col items-center gap-1.5">
         <div className={`flex flex-col overflow-hidden rounded-xl shadow-lg ${isSatellite ? "sat-glass" : "street-card"
           }`}>
           <button

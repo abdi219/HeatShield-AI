@@ -291,7 +291,7 @@ export function RouteFinder() {
 
   return (
     <div 
-      className={`w-[360px] sm:w-[410px] max-h-[calc(100vh-6rem)] overflow-y-auto p-4 rounded-2xl space-y-3.5 shadow-2xl select-none scrollbar-thin transition-all duration-300 ${glassCard}`}
+      className={`w-[calc(100vw-1.5rem)] max-w-sm sm:w-[410px] max-h-[calc(100vh-9.5rem)] md:max-h-[calc(100vh-6rem)] overflow-y-auto p-4 rounded-2xl space-y-3.5 shadow-2xl select-none scrollbar-thin transition-all duration-300 ${glassCard}`}
     >
       {/* Header */}
       <div className={`flex items-center justify-between pb-2.5 border-b ${border}`}>

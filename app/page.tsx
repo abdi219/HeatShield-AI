@@ -9,6 +9,7 @@ import { RouteFinder } from "@/components/routes/RouteFinder";
 import { WhatIfSimulator } from "@/components/simulator/WhatIfSimulator";
 import { AIAssistantDrawer } from "@/components/ai/AIAssistantDrawer";
 import { DocsShowcase } from "@/components/docs/DocsShowcase";
+import { MobileBottomDock } from "@/components/hud/MobileBottomDock";
 import { Layers, Flame, Trees, ChevronRight, Sparkles, MapPin } from "lucide-react";
 
 const MapCanvas = dynamic(
@@ -315,8 +316,8 @@ export default function HomePage() {
         ────────────────────────────────────────────────────────────────────── */}
         {selectedLocation && selectedLocation.data && (
           <div
-            className={`absolute top-[132px] right-5 z-[1000] rounded-2xl overflow-hidden shadow-2xl ${glassCard}`}
-            style={{ width: "330px", maxHeight: "calc(100vh - 160px)", overflowY: "auto" }}
+            className={`fixed bottom-20 inset-x-3 max-w-sm mx-auto md:absolute md:top-[132px] md:right-5 md:bottom-auto md:left-auto md:max-w-none md:w-[330px] z-[1050] md:z-[1000] rounded-2xl overflow-hidden shadow-2xl transition-all ${glassCard}`}
+            style={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }}
           >
             {/* Header */}
             <div className={`px-4 pt-3.5 pb-2.5 border-b ${border}`}>
@@ -506,6 +507,9 @@ export default function HomePage() {
 
         {/* ── Documentation & Pitch Showcase (Milestone 7) ────────────────── */}
         <DocsShowcase />
+
+        {/* ── Mobile Floating Bottom Dock (Mobile Only) ───────────────────── */}
+        <MobileBottomDock />
       </div>
     </main>
   );

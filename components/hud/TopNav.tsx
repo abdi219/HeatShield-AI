@@ -35,6 +35,7 @@ export const TopNav: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
 
   const isSatellite = mapStyle === "satellite";
@@ -148,7 +149,8 @@ export const TopNav: React.FC = () => {
   };
 
   return (
-    <header className={`absolute top-0 left-0 right-0 w-full h-14 px-4 sm:px-6 z-[1100] flex items-center justify-between border-b transition-all duration-300 ${
+    <>
+      <header className={`absolute top-0 left-0 right-0 w-full h-14 px-4 sm:px-6 z-[1100] flex items-center justify-between border-b transition-all duration-300 ${
       isSatellite 
         ? "sat-glass-nav" 
         : "bg-white/95 backdrop-blur-md border-slate-200 text-slate-900 shadow-sm"
@@ -175,7 +177,7 @@ export const TopNav: React.FC = () => {
           </div>
         </div>
 
-        {/* Search Bar */}
+        {/* Search Bar (Desktop) */}
         <form onSubmit={handleSearchSubmit} className="hidden xl:flex items-center">
           <div className={`flex items-center h-9 px-3.5 rounded-full w-68 2xl:w-76 transition-all duration-200 shadow-sm ${
             isSatellite
@@ -207,6 +209,20 @@ export const TopNav: React.FC = () => {
             )}
           </div>
         </form>
+
+        {/* Mobile Search Toggle Button */}
+        <button
+          type="button"
+          onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
+          className={`flex xl:hidden p-2 rounded-lg border transition-all ${
+            isMobileSearchOpen
+              ? isSatellite ? "bg-white text-slate-950 font-bold" : "bg-slate-900 text-white font-bold"
+              : isSatellite ? "bg-white/10 hover:bg-white/20 text-white border-white/20" : "bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200"
+          }`}
+          title="Search Location"
+        >
+          <Search className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {/* Segmented Navigation Tabs */}
@@ -334,10 +350,10 @@ export const TopNav: React.FC = () => {
           {temperatureUnit === "celsius" ? "°C" : "°F"}
         </button>
 
-        {/* AI Assistant Button */}
+        {/* AI Assistant Button (Desktop) */}
         <button
           onClick={() => setIsAIAssistantOpen(!isAIAssistantOpen)}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all ${
+          className={`hidden md:flex px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all ${
             isAIAssistantOpen
               ? "bg-slate-900 text-white border border-slate-900"
               : isSatellite
@@ -349,5 +365,66 @@ export const TopNav: React.FC = () => {
         </button>
       </div>
     </header>
+
+    {/* Mobile Search Overlay Bar */}
+    {isMobileSearchOpen && (
+      <div className={`absolute top-14 left-0 right-0 z-[1099] p-3 flex xl:hidden border-b shadow-2xl animate-in slide-in-from-top-2 duration-200 ${
+        isSatellite 
+          ? "sat-glass text-white border-white/30" 
+          : "bg-white/98 backdrop-blur-md border-slate-200 text-slate-900"
+      }`}>
+        <form onSubmit={(e) => { handleSearchSubmit(e); setIsMobileSearchOpen(false); }} className="w-full flex items-center gap-2">
+          <div className={`flex items-center h-10 px-3.5 rounded-xl w-full border transition-all ${
+            isSatellite
+              ? "bg-white/20 hover:bg-white/25 border-white/40 text-white placeholder:text-white/80 focus-within:bg-white/30 focus-within:border-white/70"
+              : "bg-slate-100/90 hover:bg-white border-slate-200 text-slate-900 focus-within:bg-white focus-within:border-slate-400"
+          }`}>
+            <Search className={`w-4 h-4 shrink-0 mr-2 ${isSatellite ? "text-white" : "text-slate-500"}`} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search address, park, or city..."
+              autoFocus
+              className={`w-full bg-transparent text-xs font-semibold focus:outline-none ${
+                isSatellite ? "text-white placeholder:text-white/80" : "text-slate-900 placeholder:text-slate-400"
+              }`}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className={`text-xs font-bold px-1.5 ${isSatellite ? "text-white/80 hover:text-white" : "text-slate-400 hover:text-slate-800"}`}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <button
+            type="submit"
+            className={`px-4 h-10 rounded-xl text-xs font-bold shrink-0 transition-all ${
+              isSatellite ? "bg-white text-slate-950 font-black shadow-md hover:bg-slate-100" : "bg-slate-900 text-white font-bold shadow-sm hover:bg-slate-800"
+            }`}
+          >
+            Go
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileSearchOpen(false);
+              setSearchQuery("");
+            }}
+            className={`px-3 h-10 rounded-xl text-xs font-bold shrink-0 border transition-all ${
+              isSatellite
+                ? "bg-white/20 hover:bg-white/30 text-white border-white/40"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+            }`}
+          >
+            Cancel
+          </button>
+        </form>
+      </div>
+    )}
+    </>
   );
 };

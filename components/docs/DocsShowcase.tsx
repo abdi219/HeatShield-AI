@@ -198,14 +198,14 @@ export function DocsShowcase() {
           <div className="flex items-center gap-2">
             {/* Segmented Navigation Tabs */}
             <div
-              className={`p-1 rounded-xl flex items-center border text-xs font-semibold ${
+              className={`p-1 rounded-xl flex items-center border text-[11px] sm:text-xs font-semibold overflow-x-auto ${
                 isSatellite ? "bg-white/10 border-white/15" : "bg-slate-100 border-slate-200"
               }`}
             >
               <button
                 type="button"
                 onClick={() => setActiveTabName("mission")}
-                className={`px-3 py-1 rounded-lg text-xs transition-all ${
+                className={`px-2 sm:px-3 py-1 rounded-lg transition-all shrink-0 ${
                   activeTabName === "mission"
                     ? isSatellite
                       ? "bg-white text-slate-950 font-bold"
@@ -220,7 +220,7 @@ export function DocsShowcase() {
               <button
                 type="button"
                 onClick={() => setActiveTabName("impact")}
-                className={`px-3 py-1 rounded-lg text-xs transition-all ${
+                className={`px-2 sm:px-3 py-1 rounded-lg transition-all shrink-0 ${
                   activeTabName === "impact"
                     ? isSatellite
                       ? "bg-white text-slate-950 font-bold"
@@ -235,7 +235,7 @@ export function DocsShowcase() {
               <button
                 type="button"
                 onClick={() => setActiveTabName("methodology")}
-                className={`px-3 py-1 rounded-lg text-xs transition-all ${
+                className={`px-2 sm:px-3 py-1 rounded-lg transition-all shrink-0 ${
                   activeTabName === "methodology"
                     ? isSatellite
                       ? "bg-white text-slate-950 font-bold"
@@ -250,7 +250,7 @@ export function DocsShowcase() {
               <button
                 type="button"
                 onClick={() => setActiveTabName("faq")}
-                className={`px-3 py-1 rounded-lg text-xs transition-all ${
+                className={`px-2 sm:px-3 py-1 rounded-lg transition-all shrink-0 ${
                   activeTabName === "faq"
                     ? isSatellite
                       ? "bg-white text-slate-950 font-bold"
