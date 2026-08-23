@@ -74,7 +74,7 @@ export const MobileBottomDock: React.FC = () => {
   ];
 
   return (
-    <div className={`fixed bottom-3 inset-x-3 z-[1100] flex md:hidden items-center justify-around p-1.5 rounded-2xl shadow-2xl backdrop-blur-2xl border transition-all duration-300 pointer-events-auto ${
+    <div className={`fixed bottom-3 inset-x-3 z-[1100] flex lg:hidden items-center justify-around p-1.5 rounded-2xl shadow-2xl backdrop-blur-2xl border transition-all duration-300 pointer-events-auto ${
       isSatellite
         ? "bg-white/15 backdrop-blur-xl border-white/30 text-white shadow-black/40"
         : "bg-white/95 backdrop-blur-md border-slate-200 text-slate-900 shadow-slate-300/60"

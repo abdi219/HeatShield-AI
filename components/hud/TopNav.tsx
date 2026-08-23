@@ -225,8 +225,8 @@ export const TopNav: React.FC = () => {
         </button>
       </div>
 
-      {/* Segmented Navigation Tabs */}
-      <nav className={`hidden md:flex items-center p-1 rounded-xl shrink-0 transition-all ${
+      {/* Segmented Navigation Tabs (Desktop Only) */}
+      <nav className={`hidden lg:flex items-center p-1 rounded-xl shrink-0 transition-all ${
         isSatellite 
           ? "bg-white/15 backdrop-blur-xl border border-white/30 shadow-md" 
           : "bg-slate-100 border border-slate-200"
@@ -353,7 +353,7 @@ export const TopNav: React.FC = () => {
         {/* AI Assistant Button (Desktop) */}
         <button
           onClick={() => setIsAIAssistantOpen(!isAIAssistantOpen)}
-          className={`hidden md:flex px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all ${
+          className={`hidden lg:flex px-3.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all ${
             isAIAssistantOpen
               ? "bg-slate-900 text-white border border-slate-900"
               : isSatellite

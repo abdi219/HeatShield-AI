@@ -906,8 +906,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
         </div>
       )}
 
-      {/* Top-Right Controls: Heatmap Toggle & Map Switcher */}
-      <div className="absolute top-20 right-5 z-[1000] flex items-center gap-2.5">
+      {/* Top-Right Controls: Heatmap Toggle & Map Switcher (Desktop Only) */}
+      <div className="absolute top-20 right-5 z-[1000] hidden lg:flex items-center gap-2.5">
         {/* Heatmap Toggle */}
         <button
           onClick={toggleHeatmapVisibility}
@@ -944,9 +944,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
         </div>
       </div>
 
-      {/* Zoom Controls (Bottom-Right) */}
+      {/* Zoom Controls (Bottom-Right: Buttons on desktop, Zoom badge everywhere) */}
       <div className="absolute bottom-20 right-3.5 md:bottom-5 md:right-5 z-[1000] flex flex-col items-center gap-1.5">
-        <div className={`flex flex-col overflow-hidden rounded-xl shadow-lg ${isSatellite ? "sat-glass" : "street-card"
+        <div className={`hidden md:flex flex-col overflow-hidden rounded-xl shadow-lg ${isSatellite ? "sat-glass" : "street-card"
           }`}>
           <button
             onClick={handleZoomIn}
@@ -972,7 +972,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       </div>
 
       {/* Status Bar (Bottom-Left) */}
-      <div className={`absolute bottom-5 left-5 z-[1000] hidden md:flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-mono shadow-sm ${isSatellite ? "sat-glass text-white" : "street-card text-slate-900"
+      <div className={`absolute bottom-5 left-5 z-[1000] hidden xl:flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-mono shadow-sm ${isSatellite ? "sat-glass text-white" : "street-card text-slate-900"
         }`}>
         <span className="font-bold">
           {isHeatmapVisible ? "Microclimate Thermal Engine" : "Base Map Mode"}

@@ -173,42 +173,60 @@ export function DocsShowcase() {
             : "bg-white border-slate-200 text-slate-900"
         }`}
       >
-        {/* ── 1. Clean Minimalist Header ─────────────────────────────── */}
+        {/* ── 1. Clean Responsive Header ─────────────────────────────── */}
         <div
-          className={`px-5 py-3 border-b flex items-center justify-between gap-4 shrink-0 ${
+          className={`px-4 sm:px-5 py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 ${
             isSatellite ? "border-white/10 bg-white/5" : "border-slate-100 bg-slate-50/60"
           }`}
         >
-          <div className="flex items-center gap-2.5">
-            <div
-              className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shadow-sm ${
-                isSatellite ? "bg-white text-slate-950 font-black" : "bg-slate-900 text-white"
+          {/* Row 1 on Mobile: Logo/Title on Left, Close Button on Right */}
+          <div className="flex items-center justify-between w-full sm:w-auto">
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shadow-sm ${
+                  isSatellite ? "bg-white text-slate-950 font-black" : "bg-slate-900 text-white"
+                }`}
+              >
+                <Shield className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <h2 className="text-xs sm:text-sm font-bold tracking-tight">HeatShield AI</h2>
+                <p className={`text-[9px] font-mono ${isSatellite ? "text-slate-400" : "text-slate-500"}`}>
+                  Street-Level Heat Resilience
+                </p>
+              </div>
+            </div>
+
+            {/* Mobile Close Button */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("map")}
+              title="Return to Map"
+              className={`p-1.5 rounded-lg border transition-all flex sm:hidden items-center justify-center ${
+                isSatellite
+                  ? "bg-white/10 hover:bg-white/20 text-white border-white/15"
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
               }`}
             >
-              <Shield className="w-3.5 h-3.5" />
-            </div>
-            <div>
-              <h2 className="text-xs sm:text-sm font-bold tracking-tight">HeatShield AI</h2>
-              <p className={`text-[9px] font-mono ${isSatellite ? "text-slate-400" : "text-slate-500"}`}>
-                Street-Level Heat Resilience
-              </p>
-            </div>
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Row 2 on Mobile (or right side on Desktop): Segmented Tabs + Desktop Close Button */}
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
             {/* Segmented Navigation Tabs */}
             <div
-              className={`p-1 rounded-xl flex items-center border text-[11px] sm:text-xs font-semibold overflow-x-auto ${
+              className={`w-full sm:w-auto p-1 rounded-xl flex items-center border text-[11px] sm:text-xs font-semibold overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
                 isSatellite ? "bg-white/10 border-white/15" : "bg-slate-100 border-slate-200"
               }`}
             >
               <button
                 type="button"
                 onClick={() => setActiveTabName("mission")}
-                className={`px-2 sm:px-3 py-1 rounded-lg transition-all shrink-0 ${
+                className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1 rounded-lg transition-all text-center shrink-0 ${
                   activeTabName === "mission"
                     ? isSatellite
-                      ? "bg-white text-slate-950 font-bold"
+                      ? "bg-white text-slate-950 font-bold shadow-xs"
                       : "bg-white text-slate-900 shadow-sm font-bold"
                     : isSatellite
                     ? "text-slate-300 hover:text-white"
@@ -220,10 +238,10 @@ export function DocsShowcase() {
               <button
                 type="button"
                 onClick={() => setActiveTabName("impact")}
-                className={`px-2 sm:px-3 py-1 rounded-lg transition-all shrink-0 ${
+                className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1 rounded-lg transition-all text-center shrink-0 ${
                   activeTabName === "impact"
                     ? isSatellite
-                      ? "bg-white text-slate-950 font-bold"
+                      ? "bg-white text-slate-950 font-bold shadow-xs"
                       : "bg-white text-slate-900 shadow-sm font-bold"
                     : isSatellite
                     ? "text-slate-300 hover:text-white"
@@ -235,10 +253,10 @@ export function DocsShowcase() {
               <button
                 type="button"
                 onClick={() => setActiveTabName("methodology")}
-                className={`px-2 sm:px-3 py-1 rounded-lg transition-all shrink-0 ${
+                className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1 rounded-lg transition-all text-center shrink-0 ${
                   activeTabName === "methodology"
                     ? isSatellite
-                      ? "bg-white text-slate-950 font-bold"
+                      ? "bg-white text-slate-950 font-bold shadow-xs"
                       : "bg-white text-slate-900 shadow-sm font-bold"
                     : isSatellite
                     ? "text-slate-300 hover:text-white"
@@ -250,10 +268,10 @@ export function DocsShowcase() {
               <button
                 type="button"
                 onClick={() => setActiveTabName("faq")}
-                className={`px-2 sm:px-3 py-1 rounded-lg transition-all shrink-0 ${
+                className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1 rounded-lg transition-all text-center shrink-0 ${
                   activeTabName === "faq"
                     ? isSatellite
-                      ? "bg-white text-slate-950 font-bold"
+                      ? "bg-white text-slate-950 font-bold shadow-xs"
                       : "bg-white text-slate-900 shadow-sm font-bold"
                     : isSatellite
                     ? "text-slate-300 hover:text-white"
@@ -264,12 +282,12 @@ export function DocsShowcase() {
               </button>
             </div>
 
-            {/* Close Button */}
+            {/* Desktop Close Button */}
             <button
               type="button"
               onClick={() => setActiveTab("map")}
               title="Return to Map"
-              className={`p-1.5 rounded-lg border transition-all ${
+              className={`p-1.5 rounded-lg border transition-all hidden sm:flex items-center justify-center shrink-0 ${
                 isSatellite
                   ? "bg-white/10 hover:bg-white/20 text-white border-white/15"
                   : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
@@ -281,7 +299,7 @@ export function DocsShowcase() {
         </div>
 
         {/* ── 2. Modal Body (Compact Viewport Scaling) ────────────────── */}
-        <div className="p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5 overflow-y-auto max-h-[82vh] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div className="p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5 overflow-y-auto max-h-[75vh] sm:max-h-[80vh] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {/* ======================================================== */}
           {/* TAB 1: OVERVIEW (Fits 100% On Screen)                    */}
           {/* ======================================================== */}
@@ -314,40 +332,40 @@ export function DocsShowcase() {
                   </span>
                 </div>
 
-                <div className="relative w-full h-24 sm:h-28 rounded-xl overflow-hidden border border-white/15 flex items-center">
+                <div className="relative w-full h-28 sm:h-32 rounded-xl overflow-hidden border border-white/15 flex items-center">
                   {/* Left: Traditional Weather */}
                   <div
-                    className="absolute inset-y-0 left-0 bg-slate-900 text-white p-3 flex flex-col justify-between overflow-hidden"
+                    className="absolute inset-y-0 left-0 bg-slate-900 text-white p-2.5 sm:p-3.5 flex flex-col justify-between overflow-hidden"
                     style={{ width: `${sliderPos}%` }}
                   >
                     <div>
-                      <span className="text-[8px] font-mono uppercase tracking-wider bg-white/15 px-1.5 py-0.5 rounded text-slate-200">
-                        Airport Weather App
+                      <span className="text-[8px] sm:text-[9px] font-mono uppercase tracking-wider bg-white/15 px-1.5 py-0.5 rounded text-slate-200 inline-block truncate max-w-full">
+                        Airport Forecast
                       </span>
-                      <p className="text-[11px] font-semibold mt-0.5">Single City Average</p>
+                      <p className="text-[10px] sm:text-xs font-semibold mt-0.5 truncate text-slate-300">City Average</p>
                     </div>
 
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-black font-mono">29.0°C</span>
-                      <span className="text-[10px] text-emerald-400 font-medium">"Safe & Mild"</span>
+                    <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1.5">
+                      <span className="text-xl sm:text-2xl font-black font-mono">29.0°C</span>
+                      <span className="text-[9px] sm:text-[10px] text-emerald-400 font-medium truncate">Safe & Mild</span>
                     </div>
                   </div>
 
                   {/* Right: Street Reality */}
                   <div
-                    className="absolute inset-y-0 right-0 bg-slate-950 text-white p-3 flex flex-col justify-between overflow-hidden text-right"
+                    className="absolute inset-y-0 right-0 bg-slate-950 text-white p-2.5 sm:p-3.5 flex flex-col justify-between overflow-hidden text-right"
                     style={{ width: `${100 - sliderPos}%` }}
                   >
                     <div>
-                      <span className="text-[8px] font-mono uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded text-white font-bold">
+                      <span className="text-[8px] sm:text-[9px] font-mono uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded text-white font-bold inline-block truncate max-w-full">
                         HeatShield Reality
                       </span>
-                      <p className="text-[11px] font-semibold mt-0.5">30m Street Microclimate</p>
+                      <p className="text-[10px] sm:text-xs font-semibold mt-0.5 truncate text-slate-300">30m Microclimate</p>
                     </div>
 
-                    <div className="flex items-baseline justify-end gap-1.5">
-                      <span className="text-[10px] text-slate-300">Asphalt Hotspot:</span>
-                      <span className="text-2xl font-black font-mono text-white">46.5°C</span>
+                    <div className="flex flex-col sm:flex-row sm:items-baseline justify-end gap-0.5 sm:gap-1.5">
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 truncate">Asphalt Hotspot:</span>
+                      <span className="text-xl sm:text-2xl font-black font-mono text-white">46.5°C</span>
                     </div>
                   </div>
 
@@ -449,7 +467,7 @@ export function DocsShowcase() {
                 </div>
 
                 {/* Clean Typography Segmented Toggle (Zero SVGs) */}
-                <div className={`p-1 rounded-xl border flex items-center self-start sm:self-auto ${
+                <div className={`w-full sm:w-auto p-1 rounded-xl border flex items-center overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
                   isSatellite ? "bg-white/10 border-white/15" : "bg-slate-100 border-slate-200"
                 }`}>
                   {PERSONA_JOURNEYS.map((p, idx) => {

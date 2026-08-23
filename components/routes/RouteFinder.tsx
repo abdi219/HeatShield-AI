@@ -102,6 +102,7 @@ export function RouteFinder() {
   const [originText, setOriginText] = useState(origin?.name || "");
   const [destText, setDestText] = useState(destination?.name || "");
   const [isDirectionsExpanded, setIsDirectionsExpanded] = useState(true);
+  const [isMobileMinimized, setIsMobileMinimized] = useState(true);
 
   // Synchronize local input state whenever store coordinates are placed/updated/cleared
   useEffect(() => {
@@ -306,6 +307,16 @@ export function RouteFinder() {
           </h3>
         </div>
         <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setIsMobileMinimized(!isMobileMinimized)}
+            className={`flex md:hidden px-1.5 py-0.5 rounded-lg text-[10px] font-bold border transition-all ${
+              isSatellite ? "border-white/20 text-white/80 hover:bg-white/10" : "border-slate-200 text-slate-600 hover:bg-slate-100"
+            }`}
+            title={isMobileMinimized ? "Expand Route Panel" : "Minimize Route Panel"}
+          >
+            {isMobileMinimized ? "▲" : "▼"}
+          </button>
           {hasActiveRoute && (
             <button
               type="button"
@@ -329,14 +340,74 @@ export function RouteFinder() {
         </div>
       </div>
 
-      {/* Origin & Destination Inputs with Interactive Map Pinning */}
-      <form 
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleCalculateRoutes();
-        }}
-        className="space-y-2"
-      >
+      {/* Minimized Mobile View (Rich Glanceable Summary) */}
+      {isMobileMinimized && (
+        <div className="flex md:hidden flex-col gap-2 pt-0.5">
+          {coolRoute && fastestRoute ? (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-emerald-400 truncate">
+                  Cool: -{formatDeltaTemp(fastestRoute.averageTempCelsius - coolRoute.averageTempCelsius)}{unitSymbol} Cooler ({coolRoute.exposureReductionPct}% Less Heat)
+                </span>
+                <span className={`text-[10px] font-mono shrink-0 ${textSecondary}`}>
+                  {formatSmartDuration(coolRoute.durationSeconds)} • {(coolRoute.distanceMeters / 1000).toFixed(1)}km
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[10px] font-mono pt-1 border-t border-white/10">
+                <span className={textSecondary}>
+                  Peak: <b className="text-emerald-400">{formatTemp(coolRoute.peakTempCelsius)}{unitSymbol}</b> vs Direct <b className="text-red-400">{formatTemp(fastestRoute.peakTempCelsius)}{unitSymbol}</b>
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleClearRoute}
+                    className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold border transition-all ${
+                      isSatellite ? "bg-white/10 text-white border-white/20" : "bg-slate-100 text-slate-700 border-slate-200"
+                    }`}
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMinimized(false)}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition-all ${
+                      isSatellite ? "bg-white text-slate-950 font-black shadow-sm" : "bg-slate-900 text-white font-bold shadow-sm"
+                    }`}
+                  >
+                    Details ▲
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2">
+              <span className={`text-xs font-medium truncate ${textSecondary}`}>
+                A: {originText || "Start"} → B: {destText || "Destination"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsMobileMinimized(false)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 transition-all ${
+                  isSatellite ? "bg-white text-slate-950 font-black shadow-sm" : "bg-slate-900 text-white font-bold shadow-sm"
+                }`}
+              >
+                Set Route ▲
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Main Form & Details (Collapsible on mobile) */}
+      <div className={`${isMobileMinimized ? "hidden md:block" : "block"} space-y-3.5`}>
+        {/* Origin & Destination Inputs with Interactive Map Pinning */}
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleCalculateRoutes();
+          }}
+          className="space-y-2"
+        >
         {/* Origin (A) */}
         <div className="relative">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
@@ -770,6 +841,7 @@ export function RouteFinder() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
