@@ -136,7 +136,7 @@ export default function HomePage() {
   const border        = isSatellite ? "border-white/25" : "border-slate-200";
 
   return (
-    <main className={`relative w-screen h-screen overflow-hidden flex flex-col ${
+    <main className={`fixed inset-0 w-full h-full h-[100dvh] overflow-hidden flex flex-col ${
       isSatellite ? "bg-[#3f413c]" : "bg-white"
     }`}>
       {/*
@@ -680,8 +680,8 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ── Thermal Scale Legend (Bottom Center on Desktop & Tablet) ──── */}
-        <div className={`absolute bottom-5 left-1/2 -translate-x-1/2 z-[1000] hidden md:flex
+        {/* ── Thermal Scale Legend (Bottom Center on Desktop Screen) ──── */}
+        <div className={`absolute bottom-5 left-1/2 -translate-x-1/2 z-[1000] hidden lg:flex
           items-center gap-4 px-5 py-2.5 rounded-full shadow-lg transition-all ${glassCard}`}
         >
           <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${textMuted}`}>
@@ -736,8 +736,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ── Minimized Floating Legend Badge (Mobile & XS/S screens) ────── */}
-        <div className="absolute bottom-20 left-3.5 z-[1000] flex md:hidden flex-col items-start gap-1">
+        {/* ── Minimized Floating Legend Badge (Mobile & Tablet/iPad screens) ────── */}
+        <div className="absolute bottom-20 left-3.5 z-[1000] flex lg:hidden flex-col items-start gap-1">
           {isMobileLegendOpen ? (
             <div className={`p-3 rounded-2xl shadow-2xl border animate-in fade-in slide-in-from-bottom-2 duration-200 ${glassCard}`}>
               <div className="flex items-center justify-between gap-3 mb-2 pb-1.5 border-b border-white/10">

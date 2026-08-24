@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useAppStore } from "@/lib/store";
+import { HeatShieldEmblem } from "@/components/common/HeatShieldEmblem";
 import {
   Shield,
   X,
@@ -183,11 +184,11 @@ export function DocsShowcase() {
           <div className="flex items-center justify-between w-full sm:w-auto">
             <div className="flex items-center gap-2.5">
               <div
-                className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shadow-sm ${
-                  isSatellite ? "bg-white text-slate-950 font-black" : "bg-slate-900 text-white"
+                className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shadow-sm border transition-all ${
+                  isSatellite ? "bg-white/15 backdrop-blur-md border-white/35 shadow-sm" : "bg-slate-100 border-slate-200 shadow-sm"
                 }`}
               >
-                <Shield className="w-3.5 h-3.5" />
+                <HeatShieldEmblem size={16} isSatellite={isSatellite} className={isSatellite ? "text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]" : "text-slate-900"} />
               </div>
               <div>
                 <h2 className="text-xs sm:text-sm font-bold tracking-tight">HeatShield AI</h2>

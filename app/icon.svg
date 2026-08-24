@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <style>
+    :root {
+      --emblem-color: #0F172A;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --emblem-color: #FFFFFF;
+      }
+    }
+    .emblem-fill {
+      fill: var(--emblem-color);
+    }
+    .emblem-stroke {
+      stroke: var(--emblem-color);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  </style>
+
+  <!-- 1. Top Canopy Arch Dome -->
+  <path
+    class="emblem-fill"
+    d="M 72 312 
+       C 88 200, 160 92, 256 84 
+       C 352 92, 424 200, 440 312 
+       C 400 236, 334 168, 256 164 
+       C 178 168, 112 236, 72 312 Z"
+  />
+
+  <!-- 2. Radiating Dashed Solar Lines -->
+  <line
+    class="emblem-stroke"
+    x1="190" y1="220" x2="238" y2="314"
+    stroke-width="16"
+    stroke-dasharray="18 16"
+  />
+  <line
+    class="emblem-stroke"
+    x1="256" y1="208" x2="256" y2="230"
+    stroke-width="16"
+  />
+  <line
+    class="emblem-stroke"
+    x1="322" y1="220" x2="274" y2="314"
+    stroke-width="16"
+    stroke-dasharray="18 16"
+  />
+
+  <!-- 3. Center Reflection Rays (Incoming & Outgoing Vector) -->
+  <line
+    class="emblem-stroke"
+    x1="256" y1="240" x2="256" y2="356"
+    stroke-width="16"
+  />
+  <line
+    class="emblem-stroke"
+    x1="138" y1="266" x2="256" y2="356"
+    stroke-width="16"
+  />
+  <line
+    class="emblem-stroke"
+    x1="256" y1="356" x2="354" y2="280"
+    stroke-width="16"
+  />
+  <path
+    class="emblem-fill"
+    d="M 374 264 L 332 272 L 354 300 Z"
+  />
+
+  <!-- 4. Base Surface & Perspective Grid Cross -->
+  <line
+    class="emblem-stroke"
+    x1="68" y1="370" x2="444" y2="370"
+    stroke-width="16"
+  />
+  <line
+    class="emblem-stroke"
+    x1="98" y1="410" x2="182" y2="344"
+    stroke-width="16"
+  />
+  <line
+    class="emblem-stroke"
+    x1="414" y1="410" x2="330" y2="344"
+    stroke-width="16"
+  />
+  <line
+    class="emblem-stroke"
+    x1="256" y1="370" x2="256" y2="410"
+    stroke-width="16"
+  />
+</svg>

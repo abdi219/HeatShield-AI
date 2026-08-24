@@ -10,10 +10,16 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "HeatShield AI — Street-Level Urban Microclimate Intelligence",
+  title: {
+    default: "HeatShield AI | Street-Level Heat Resilience & Microclimate Intelligence",
+    template: "%s | HeatShield AI",
+  },
   description: "Detect, understand, avoid, and reduce urban heat using street-level temperature spatial data, heat-aware routing, and simulation.",
   keywords: ["urban heat island", "FortyGuard", "microclimate", "cool routing", "heat mitigation", "urban resilience"],
   authors: [{ name: "HeatShield AI Team" }],
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

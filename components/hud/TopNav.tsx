@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import { CITY_PRESETS, findMatchingPilotCity } from "@/lib/constants";
+import { HeatShieldEmblem } from "@/components/common/HeatShieldEmblem";
 import { ChevronDown, Search, Loader2 } from "lucide-react";
 
 interface WeatherData {
@@ -158,10 +159,12 @@ export const TopNav: React.FC = () => {
       {/* Brand & Search Bar */}
       <div className="flex items-center gap-4 lg:gap-5 shrink-0">
         <div className="flex items-center gap-2">
-          <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-bold shadow-sm ${
-            isSatellite ? "bg-white text-slate-950 font-extrabold shadow-md" : "bg-slate-900 text-white"
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${
+            isSatellite 
+              ? "bg-white/15 backdrop-blur-md border-white/35 shadow-sm" 
+              : "bg-slate-100 border-slate-200 shadow-sm"
           }`}>
-            HS
+            <HeatShieldEmblem size={16} isSatellite={isSatellite} className={isSatellite ? "text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]" : "text-slate-900"} />
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className={`font-bold text-sm tracking-tight ${isSatellite ? "text-white" : "text-slate-900"}`}>

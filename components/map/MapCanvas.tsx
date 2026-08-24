@@ -189,10 +189,12 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       return;
     }
 
-    // Downscale by 4x for high-performance 60 FPS interpolation field
-    const scale = 0.25;
-    const offWidth = Math.max(64, Math.floor(size.x * scale));
-    const offHeight = Math.max(64, Math.floor(size.y * scale));
+    // Adaptive performance downscaling: Capped at ~220px offscreen resolution on 4K/1080p desktop monitors
+    const maxDimension = Math.max(size.x, size.y);
+    const targetOffDim = Math.min(220, Math.max(80, Math.round(maxDimension * 0.18)));
+    const scale = targetOffDim / maxDimension;
+    const offWidth = Math.max(64, Math.round(size.x * scale));
+    const offHeight = Math.max(64, Math.round(size.y * scale));
     const totalCells = offWidth * offHeight;
 
     if (!offscreenCanvasRef.current) {
@@ -210,12 +212,16 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     const weightSum = new Float32Array(totalCells);
 
     // Continuous liquid field radius calculation:
-    // With 42 grid steps across the 3.0x total span (screen + 2x buffer),
-    // the distance between adjacent nodes in offscreen space is: (offWidth * 3.0) / 42.
     const nodeDistOff = (offWidth * 3.0) / 42;
-    const radiusOff = Math.max(18, Math.round(nodeDistOff * 1.95));
+    const radiusOff = Math.max(14, Math.round(nodeDistOff * 1.85));
     const radiusOff2 = radiusOff * radiusOff;
-    const sigma2 = 2 * (radiusOff * 0.62) * (radiusOff * 0.62);
+    const sigma2 = 2 * (radiusOff * 0.60) * (radiusOff * 0.60);
+
+    // Precomputed Gaussian LUT (Lookup Table): eliminates expensive Math.exp calls in inner hot loop
+    const gaussianLUT = new Float32Array(radiusOff2 + 1);
+    for (let r2 = 0; r2 <= radiusOff2; r2++) {
+      gaussianLUT[r2] = Math.exp(-r2 / sigma2);
+    }
 
     const layerType = activeHeatLayerRef.current;
 
@@ -286,7 +292,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
           const dx = x - cx;
           const dist2 = dx * dx + dy2;
           if (dist2 <= radiusOff2) {
-            const w = Math.exp(-dist2 / sigma2);
+            const w = gaussianLUT[dist2];
             const idx = rowOffset + x;
             valSum[idx] += normVal * w;
             weightSum[idx] += w;
@@ -718,8 +724,18 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     });
 
     let mouseMoveThrottleId: number | null = null;
+    let lastMouseMoveTime = 0;
 
     map.on("mousemove", (e: L.LeafletMouseEvent) => {
+      // Disable hover tooltips on touch devices (phones, tablets, iPads)
+      if (typeof window !== "undefined" && !window.matchMedia("(hover: hover)").matches) {
+        return;
+      }
+
+      const now = performance.now();
+      if (now - lastMouseMoveTime < 40) return; // Cap mouse hover checks at 25fps for silky performance
+      lastMouseMoveTime = now;
+
       if (mouseMoveThrottleId) return;
       mouseMoveThrottleId = window.requestAnimationFrame(() => {
         mouseMoveThrottleId = null;
@@ -889,10 +905,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
         </div>
       )}
 
-      {/* Hover HUD Tooltip */}
+      {/* Hover HUD Tooltip (Desktop Mouse Only) */}
       {hoverTelemetry && !pointPickingMode && isHeatmapVisible && (
         <div
-          className={`absolute z-[1000] pointer-events-none -translate-x-1/2 -translate-y-full flex items-center gap-2 font-mono text-xs font-bold px-3.5 py-1.5 rounded-xl shadow-xl ${isSatellite ? "sat-glass text-white" : "street-card text-slate-900"
+          className={`absolute z-[1000] pointer-events-none -translate-x-1/2 -translate-y-full hidden lg:flex items-center gap-2 font-mono text-xs font-bold px-3.5 py-1.5 rounded-xl shadow-xl ${isSatellite ? "sat-glass text-white" : "street-card text-slate-900"
             }`}
           style={{ left: `${hoverTelemetry.x}px`, top: `${hoverTelemetry.y}px` }}
         >

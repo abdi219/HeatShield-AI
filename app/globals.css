@@ -10,6 +10,7 @@
   --text-main: #0F172A;
 }
 
+html,
 body {
   color: var(--text-main);
   background-color: var(--canvas-bg);
@@ -17,7 +18,16 @@ body {
     "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  overscroll-behavior: none;
+  touch-action: manipulation;
 }
 
 /* ==========================================================================

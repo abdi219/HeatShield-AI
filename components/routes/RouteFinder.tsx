@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import { CITY_PRESETS, CITY_COMMUTE_CORRIDORS } from "@/lib/constants";
+import { HeatShieldEmblem } from "@/components/common/HeatShieldEmblem";
 import { 
   Navigation, 
   Clock, 
@@ -297,10 +298,10 @@ export function RouteFinder() {
       {/* Header */}
       <div className={`flex items-center justify-between pb-2.5 border-b ${border}`}>
         <div className="flex items-center gap-2">
-          <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
-            isSatellite ? "bg-white/25 text-white" : "bg-slate-900 text-white"
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all ${
+            isSatellite ? "bg-white/15 backdrop-blur-md border-white/35 text-white shadow-sm" : "bg-slate-100 border-slate-200 text-slate-900 shadow-sm"
           }`}>
-            <Navigation className="w-3.5 h-3.5" />
+            <HeatShieldEmblem size={16} isSatellite={isSatellite} className={isSatellite ? "text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]" : "text-slate-900"} />
           </div>
           <h3 className={`text-xs font-bold ${textPrimary}`}>
             Cool Route Finder ({activeCity.name})
