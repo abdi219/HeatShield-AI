@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useAppStore } from "@/lib/store";
 import { CITY_PRESETS } from "@/lib/constants";
 import { TopNav } from "@/components/hud/TopNav";
+import { HeatThresholdAlert } from "@/components/hud/HeatThresholdAlert";
 import { RouteFinder } from "@/components/routes/RouteFinder";
 import { WhatIfSimulator } from "@/components/simulator/WhatIfSimulator";
 import { AIAssistantDrawer } from "@/components/ai/AIAssistantDrawer";
@@ -168,6 +169,9 @@ export default function HomePage() {
       </svg>
 
       <TopNav />
+
+      {/* ── Real-Time Extreme Heat Safety Advisory Banner (Task 9.2) ── */}
+      <HeatThresholdAlert />
 
       <div className="absolute inset-0 w-full h-full">
         <ErrorBoundary fallbackTitle="Map Rendering Unavailable" fallbackMessage="The spatial map canvas encountered a rendering issue. Click retry to reload.">

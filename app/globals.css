@@ -132,3 +132,33 @@ body {
   border: none !important;
 }
 
+/* ==========================================================================
+   Print / PDF Export Formatting (Task 9.1)
+   ========================================================================== */
+@media print {
+  body, html {
+    position: static !important;
+    overflow: visible !important;
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+  }
+
+  nav,
+  aside[role="alert"],
+  .leaflet-container,
+  .radar-sweep-beam,
+  button,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  #printable-heat-report {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+

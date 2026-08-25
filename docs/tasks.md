@@ -252,11 +252,11 @@ Frontend (FE)  |  Backend (BE)  |  Spatial/Math (SP)  |  Docs/Design (DD)
 
 ### Milestone 9: Stretch Features (Post-MVP Buffer)
 
-- [ ] **TASK-9.1: Downloadable Spatial Heat Report** `[P3]` `[FE/BE]`
+- [x] **TASK-9.1: Downloadable Spatial Heat Report** `[P3]` `[FE/BE]`
   - Generate structured summary PDF or printable HTML report containing location heat analysis, route comparison, and simulation findings.
-- [ ] **TASK-9.2: Threshold Heat Alerts System** `[P3]` `[BE/FE]`
+- [x] **TASK-9.2: Threshold Heat Alerts System** `[P3]` `[BE/FE]`
   - Allow users to save locations and configure temperature threshold triggers with local browser notifications.
-- [ ] **TASK-9.3: Supabase User Profile & Bookmarking** `[P3]` `[FE/BE]`
+- [x] **TASK-9.3: Supabase User Profile & Bookmarking** `[P3]` `[FE/BE]`
   - Optional OAuth login allowing urban planners to save custom simulated scenarios and bookmark frequent commuting corridors.
 
 ---

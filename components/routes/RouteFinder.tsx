@@ -4,6 +4,13 @@ import React, { useState, useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import { CITY_PRESETS, CITY_COMMUTE_CORRIDORS } from "@/lib/constants";
 import { HeatShieldEmblem } from "@/components/common/HeatShieldEmblem";
+import { HeatReportModal } from "@/components/reports/HeatReportModal";
+import {
+  getSavedRouteBookmarks,
+  saveRouteBookmark,
+  deleteRouteBookmark,
+  SavedRouteBookmark,
+} from "@/lib/bookmarks";
 import { 
   Navigation, 
   Clock, 
@@ -23,7 +30,11 @@ import {
   Sun,
   Flame,
   RotateCcw,
-  X
+  X,
+  FileText,
+  Star,
+  BookmarkCheck,
+  Trash2,
 } from "lucide-react";
 
 /**
@@ -104,6 +115,13 @@ export function RouteFinder() {
   const [destText, setDestText] = useState(destination?.name || "");
   const [isDirectionsExpanded, setIsDirectionsExpanded] = useState(true);
   const [isMobileMinimized, setIsMobileMinimized] = useState(true);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [savedBookmarks, setSavedBookmarks] = useState<SavedRouteBookmark[]>([]);
+  const [isBookmarkSaved, setIsBookmarkSaved] = useState(false);
+
+  useEffect(() => {
+    setSavedBookmarks(getSavedRouteBookmarks());
+  }, []);
 
   // Synchronize local input state whenever store coordinates are placed/updated/cleared
   useEffect(() => {
@@ -265,6 +283,42 @@ export function RouteFinder() {
         }
       );
     }
+  };
+
+  const handleSaveBookmark = () => {
+    if (!origin || !destination || !coolRoute) return;
+    const name = `${originText || origin.name || "Origin"} → ${destText || destination.name || "Destination"}`;
+    saveRouteBookmark({
+      name,
+      cityName: activeCity.name,
+      originText: originText || origin.name || "Origin",
+      destText: destText || destination.name || "Destination",
+      originCoords: [origin.lat, origin.lng],
+      destCoords: [destination.lat, destination.lng],
+      travelMode,
+      coolScore: coolRoute.heatShieldScore,
+      exposureReductionPct: coolRoute.exposureReductionPct,
+    });
+    setSavedBookmarks(getSavedRouteBookmarks());
+    setIsBookmarkSaved(true);
+    setTimeout(() => setIsBookmarkSaved(false), 2500);
+  };
+
+  const handleDeleteBookmark = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    deleteRouteBookmark(id);
+    setSavedBookmarks(getSavedRouteBookmarks());
+  };
+
+  const handleApplyBookmark = (b: SavedRouteBookmark) => {
+    const o = { name: b.originText, lat: b.originCoords[0], lng: b.originCoords[1] };
+    const d = { name: b.destText, lat: b.destCoords[0], lng: b.destCoords[1] };
+    setOrigin(o);
+    setDestination(d);
+    setOriginText(b.originText);
+    setDestText(b.destText);
+    setTravelMode(b.travelMode);
+    handleCalculateRoutes(b.travelMode, o, d);
   };
 
   const activeRoute = selectedRouteId === "cool" ? coolRoute : fastestRoute;
@@ -563,6 +617,46 @@ export function RouteFinder() {
         )}
       </div>
 
+      {/* User Saved Custom Bookmarks (Task 9.3) */}
+      {savedBookmarks.length > 0 && (
+        <div className="space-y-1.5 pt-1">
+          <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block text-amber-400`}>
+            ⭐ Saved Corridors ({savedBookmarks.length})
+          </span>
+          <div className="space-y-1 max-h-32 overflow-y-auto scrollbar-thin">
+            {savedBookmarks.map((bookmark) => (
+              <div
+                key={bookmark.id}
+                onClick={() => handleApplyBookmark(bookmark)}
+                className={`w-full text-left px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all flex items-center justify-between border cursor-pointer ${
+                  isSatellite
+                    ? "bg-amber-500/15 hover:bg-amber-500/25 text-white border-amber-400/40"
+                    : "bg-amber-50/70 hover:bg-amber-100 text-slate-800 border-amber-200"
+                }`}
+              >
+                <div className="truncate pr-2">
+                  <span className="font-bold block truncate">{bookmark.name}</span>
+                  <span className={`text-[9px] font-mono ${textMuted}`}>
+                    {bookmark.cityName} • -{bookmark.exposureReductionPct}% Heat • Score {bookmark.coolScore}/100
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-[10px] font-mono font-bold text-amber-500">Run →</span>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteBookmark(e, bookmark.id)}
+                    className="p-1 text-slate-400 hover:text-red-500 transition-all"
+                    title="Delete Saved Bookmark"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Quick Verified City Corridors */}
       <div className="space-y-1.5 pt-1">
         <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block ${textMuted}`}>
@@ -840,9 +934,59 @@ export function RouteFinder() {
               </span>
             </div>
           </div>
+
+          {/* Action Bar: Export Heat Report & Bookmark Route (Task 9.1 & 9.3) */}
+          <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+            <button
+              type="button"
+              onClick={() => setIsReportModalOpen(true)}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm ${
+                isSatellite
+                  ? "bg-white text-slate-950 hover:bg-white/90 font-extrabold"
+                  : "bg-slate-900 hover:bg-slate-800 text-white"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Export Heat Report</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSaveBookmark}
+              className={`px-3 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all ${
+                isBookmarkSaved
+                  ? "bg-emerald-500 text-white border-emerald-400"
+                  : isSatellite
+                  ? "bg-white/15 hover:bg-white/25 text-white border-white/30"
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300"
+              }`}
+              title="Save Corridor to Bookmarks"
+            >
+              {isBookmarkSaved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <Star className="w-3.5 h-3.5 text-amber-400" />}
+              <span>{isBookmarkSaved ? "Saved!" : "Bookmark"}</span>
+            </button>
+          </div>
         </div>
       )}
       </div>
+
+      {/* Heat Report Modal (Task 9.1) */}
+      {coolRoute && fastestRoute && (
+        <HeatReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          reportType="route"
+          cityName={activeCity.name}
+          temperatureUnit={temperatureUnit}
+          routeData={{
+            originText: originText || origin?.name || "Origin",
+            destText: destText || destination?.name || "Destination",
+            travelMode,
+            fastestRoute,
+            coolRoute,
+          }}
+        />
+      )}
     </div>
   );
 }
