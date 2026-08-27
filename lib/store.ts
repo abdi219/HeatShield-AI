@@ -147,7 +147,7 @@ export const useAppStore = create<AppState>((set) => ({
     viewport: { ...state.viewport, ...newViewport }
   })),
 
-  mapStyle: 'streets',
+  mapStyle: 'satellite',
   setMapStyle: (mapStyle) => set({ mapStyle }),
 
   isHeatmapVisible: true,

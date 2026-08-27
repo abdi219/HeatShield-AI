@@ -11,7 +11,7 @@ export const HeatShieldEmblem: React.FC<HeatShieldEmblemProps> = ({
   size = 20,
   isSatellite = false,
 }) => {
-  const color = isSatellite ? "#FFFFFF" : "#0F172A";
+  const color = isSatellite || className.includes("text-white") ? "#FFFFFF" : "#0F172A";
 
   return (
     <svg

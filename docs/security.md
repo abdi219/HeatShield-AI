@@ -1,22 +1,24 @@
-# HeatShield AI — Security Architecture & Threat Mitigation Guide
+# HeatShield AI
+## Security Architecture & Threat Mitigation Specifications
 
-> **Version:** 2.0 (Hackathon Edition)  
-> **Scope:** API Isolation, Rate Limiting, Row Level Security (RLS), AI Grounding & Public Access Safeguards
+**Document Version:** 3.0  
+**Target Event:** FortyGuard Hackathon 2026 — Track 1: Resilient Cities & Infrastructure  
+**Scope:** API Token Isolation, Rate Limiting, Content Security Policy (CSP), AI Grounding & Public Access Safeguards
 
 ---
 
 ## 1. Threat Modeling (STRIDE Analysis)
 
-A structured STRIDE threat model evaluates potential security risks across the HeatShield AI architecture and defines automated mitigations:
+A structured STRIDE threat model evaluates potential security vectors across HeatShield AI and defines automated mitigations:
 
 | Threat Category | Potential Vector in HeatShield AI | Mitigation Strategy |
-|---|---|---|
-| **Spoofing** | Attacker impersonates an urban planner or injects forged FortyGuard temperature feeds. | Supabase JWT authentication for sensitive user operations; server-side signature validation for external API ingestion. |
-| **Tampering** | Malicious alteration of simulation logs, route waypoints, or temperature cache entries. | Strict PostgreSQL Row Level Security (RLS); cryptographic ID checks (`UUID v4`); server-side validation of all computed scores. |
-| **Repudiation** | Dispute over saved urban heat mitigation records or alert triggers. | Immutable timestamped audit columns (`created_at TIMESTAMPTZ DEFAULT NOW()`) on all database tables. |
-| **Information Disclosure** | Leakage of private API keys (`FORTYGUARD_API_KEY`, `AI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) in client JavaScript bundles. | Total server-side secret isolation via Next.js Serverless Edge endpoints; zero private secrets prefixed with `NEXT_PUBLIC_`. |
-| **Denial of Service (DoS)** | Automated bot spamming route calculations or LLM chat endpoints, exhausting API quotas. | IP-based rate limiting on serverless routes; LRU spatial caching; client request debouncing. |
-| **Elevation of Privilege** | Normal pedestrian user executing administrative planner actions or altering other users' saved locations. | Supabase RLS policies tied to `auth.uid()` and strict `CHECK (role IN (...))` database constraints. |
+| :--- | :--- | :--- |
+| **Spoofing** | Attacker impersonates an urban planner or injects forged FortyGuard temperature feeds. | Server-side signature validation for external API ingestion; optional Supabase JWT authentication for sensitive operations. |
+| **Tampering** | Malicious alteration of simulation calculations, route waypoints, or temperature cache entries. | Server-side verification of all computed physics formulas and routing metrics; read-only client consumption. |
+| **Repudiation** | Dispute over saved urban heat mitigation records or alert triggers. | Immutable timestamped audit entries (`created_at TIMESTAMPTZ DEFAULT NOW()`) on saved report records. |
+| **Information Disclosure** | Leakage of private API keys (`FORTYGUARD_API_KEY`, `GROQ_API_KEY`) in client JavaScript bundles. | Total server-side secret isolation via Next.js Serverless Route Handlers; zero private secrets prefixed with `NEXT_PUBLIC_`. |
+| **Denial of Service (DoS)** | Bot spamming route calculations or LLM chat endpoints, exhausting API quotas. | In-memory spatial LRU caching (`TTL = 300s`); client request debouncing; serverless route concurrency limits. |
+| **Elevation of Privilege** | Normal pedestrian user executing administrative planner actions. | Separation of public exploration modes from planner export workflows; optional Row Level Security (RLS) enforcement. |
 
 ---
 
@@ -24,166 +26,64 @@ A structured STRIDE threat model evaluates potential security risks across the H
 
 ### 2.1 Credential Classification Matrix
 
-| Key / Secret | Environment Location | Target Audience | Scope & Permissions |
-|---|---|---|---|
-| `FORTYGUARD_API_KEY` | Server-side only (`.env.local` / Vercel Secret) | Backend API Proxy | Read-only access to FortyGuard temperature and microclimate feeds. **NEVER sent to browser.** |
-| `AI_API_KEY` (Groq / Gemini) | Server-side only (`.env.local` / Vercel Secret) | Backend `/api/ai/chat` | Inference tokens for grounded assistance. **NEVER sent to browser.** |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-side only (`.env.local` / Vercel Secret) | Backend DB Admin | Database administration & caching writes. **NEVER sent to browser.** |
-| `NEXT_PUBLIC_MAPBOX_TOKEN` | Client & Server (`.env.local`) | Public Browser | Mapbox vector tile rendering & Geocoding. URL-restricted to authorized production domains in Mapbox Dashboard. |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client & Server (`.env.local`) | Public Browser | Restricted by Postgres RLS policies. Safe for public client querying. |
+| Key / Secret | Environment Location | Target Scope | Security Policy |
+| :--- | :--- | :--- | :--- |
+| `FORTYGUARD_API_KEY` | Server-side only (`.env.local` / Vercel Secret) | Backend API Proxy (`/api/heat/*`) | Read-only access to FortyGuard temperature feeds. **NEVER bundled in client code.** |
+| `GROQ_API_KEY` | Server-side only (`.env.local` / Vercel Secret) | Backend AI Proxy (`/api/ai/chat`) | Low-latency inference for grounded copilot. **NEVER bundled in client code.** |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side only (`.env.local` / Vercel Secret) | Backend DB Admin (Optional) | Database administration & caching writes. **NEVER bundled in client code.** |
+| `SUPABASE_ANON_KEY` | Client & Server (`.env.local`) | Public Client Sync (Optional) | Restricted by Postgres Row Level Security (RLS) policies. Safe for public client querying. |
 
 ### 2.2 Client Bundle Leakage Prevention
 
-All code interacting with sensitive APIs is isolated within the `/app/api/` or `/pages/api/` server directory. An automated CI lint check ensures that no private environment variable is imported into client-side components:
+All code interacting with third-party APIs is strictly contained within `/app/api/` serverless route handlers. A Zod-powered environment validation schema fails the build immediately if server secrets are mistakenly imported into browser code:
 
 ```typescript
-// utils/env.ts — Server-Side Strict Validator
-import { z } from 'zod';
+import { z } from "zod";
 
 const serverEnvSchema = z.object({
-  FORTYGUARD_API_KEY: z.string().min(1, "FortyGuard API Key is required on server"),
-  AI_API_KEY: z.string().min(1, "AI Provider API Key is required on server"),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, "Supabase Service Role Key is required on server"),
+  FORTYGUARD_API_KEY: z.string().optional(),
+  GROQ_API_KEY: z.string().optional(),
+  FORTYGUARD_API_BASE_URL: z.string().default("https://api.fortyguard.com/v1"),
 });
 
-export const getValidatedServerEnv = () => {
-  if (typeof window !== 'undefined') {
-    throw new Error("CRITICAL SECURITY VIOLATION: Attempted to access server environment on client!");
+export function getServerEnv() {
+  if (typeof window !== "undefined") {
+    throw new Error("CRITICAL SECURITY VIOLATION: Server environment accessed from browser client bundle.");
   }
   return serverEnvSchema.parse(process.env);
-};
-```
-
----
-
-## 3. Backend API Security & Rate Limiting
-
-### 3.1 Rate Limiting Architecture
-
-To protect external API credits and maintain responsive performance during hackathon judging, serverless API routes enforce rate limits using an in-memory sliding window or Redis Edge token bucket:
-
-```typescript
-// middleware/rateLimiter.ts
-import { NextRequest, NextResponse } from 'next/server';
-
-interface RateLimitConfig {
-  windowMs: number;
-  maxRequests: number;
 }
-
-const ENDPOINT_LIMITS: Record<string, RateLimitConfig> = {
-  '/api/ai/chat': { windowMs: 60 * 1000, maxRequests: 15 },       // 15 AI prompts per minute
-  '/api/routes/analyze': { windowMs: 60 * 1000, maxRequests: 30 }, // 30 route queries per minute
-  '/api/heat/grid': { windowMs: 60 * 1000, maxRequests: 60 },      // 60 tile queries per minute
-};
-```
-
-### 3.2 Input Validation with Zod
-
-Every incoming request payload is validated against strict schemas before executing spatial queries or mathematical scoring:
-
-```typescript
-// schemas/routeAnalysisSchema.ts
-import { z } from 'zod';
-
-export const RouteAnalysisInputSchema = z.object({
-  origin: z.object({
-    lat: z.number().min(24.0, "Latitude outside US coverage").max(50.0, "Latitude outside US coverage"),
-    lng: z.number().min(-125.0, "Longitude outside US coverage").max(-66.0, "Longitude outside US coverage"),
-    name: z.string().max(120).optional(),
-  }),
-  destination: z.object({
-    lat: z.number().min(24.0).max(50.0),
-    lng: z.number().min(-125.0).max(-66.0),
-    name: z.string().max(120).optional(),
-  }),
-  mode: z.enum(['walking', 'cycling', 'driving']).default('walking'),
-});
 ```
 
 ---
 
-## 4. Supabase & Database Row Level Security (RLS)
+## 3. Content Security Policy (CSP) & Network Headers
 
-### 4.1 Security Invariants
-1. **Public Demo Access:** Hackathon judges and public guests must be able to explore the microclimate map, run route analyses, and view baseline simulation showcases **without logging in**.
-2. **Authenticated Scope:** Private saved locations and personalized threshold alerts are restricted strictly to the user who created them.
-3. **Immutability of Historical Cache:** Cached FortyGuard data cannot be overwritten by client-side requests; only the server-side proxy service role key can update cached heat grids.
-
-### 4.2 RLS Policy Verification Matrix
-
-| Table | Operation | Target Role | Policy Rule |
-|---|---|---|---|
-| `cached_heat_cells` | `SELECT` | `anon`, `authenticated` | `USING (true)` (Public read enabled) |
-| `cached_heat_cells` | `INSERT / UPDATE` | `service_role` only | Blocked for `anon` and `authenticated` |
-| `simulation_logs` | `SELECT` | `anon`, `authenticated` | `USING (true)` (Showcase simulations readable) |
-| `simulation_logs` | `INSERT` | `anon`, `authenticated` | `WITH CHECK (auth.uid() = user_id OR user_id IS NULL)` |
-| `saved_locations` | `SELECT / INSERT / UPDATE / DELETE` | `authenticated` only | `USING (auth.uid() = user_id)` |
-| `profiles` | `SELECT / UPDATE` | `authenticated` only | `USING (auth.uid() = id)` |
-
----
-
-## 5. AI Grounding & Prompt Injection Defense
-
-To prevent prompt injection, hallucinations, and unauthorized medical advice, the AI Assistant employs a defensive multi-stage guardrail:
-
-```
-                  [ Untrusted User Input ]
-                             │
-                             ▼
-                 [ 1. Input Sanitization ]
-   (Strip markdown injections, system override keywords, limit to 400 chars)
-                             │
-                             ▼
-            [ 2. Deterministic Context Assembly ]
- (Inject ONLY verified FortyGuard temperatures, calculated HRS, and route stats)
-                             │
-                             ▼
-                 [ 3. Hardened System Prompt ]
-        - "You are HeatShield AI environmental interpreter."
-        - "You MUST base all statements on the provided data."
-        - "You MUST NOT invent temperatures or medical diagnoses."
-        - "Refuse off-topic questions not related to heat or navigation."
-                             │
-                             ▼
-                 [ 4. Streaming Output Filter ]
-        (Validate markdown structure and sanitize potential HTML tags)
-```
-
----
-
-## 6. HTTP Security Headers & Content Security Policy (CSP)
-
-Configured within `next.config.js` or Vercel edge middleware:
+Configured in `next.config.mjs`, strict security headers protect the application against cross-site scripting (XSS), clickjacking, and unauthorized data exfiltration:
 
 ```javascript
 const securityHeaders = [
-  { key: 'X-DNS-Prefetch-Control', value: 'on' },
-  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-  { key: 'X-XSS-Protection', value: '1; mode=block' },
-  { key: 'X-Frame-Options', value: 'DENY' },
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   {
-    key: 'Content-Security-Policy',
-    value: `
-      default-src 'self';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://api.mapbox.com;
-      worker-src 'self' blob:;
-      style-src 'self' 'unsafe-inline' https://api.mapbox.com https://fonts.googleapis.com;
-      img-src 'self' data: blob: https://api.mapbox.com;
-      connect-src 'self' https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com https://*.supabase.co;
-      font-src 'self' https://fonts.gstatic.com;
-      frame-ancestors 'none';
-    `.replace(/\s{2,}/g, ' ').trim()
-  }
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com data:",
+      "img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://server.arcgisonline.com https://*.tile.openstreetmap.org https://unpkg.com",
+      "connect-src 'self' https://api.fortyguard.com https://api.groq.com https://router.project-osrm.org https://nominatim.openstreetmap.org",
+      "frame-ancestors 'none'",
+    ].join("; "),
+  },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
 ];
 ```
 
 ---
 
-## 7. Privacy & Geolocation Protection
+## 4. Grounded AI Privacy & Non-Hallucination Safeguards
 
-1. **Ephemeral Geolocation:** When the user clicks *"Use Current Location"*, coordinates are held in volatile browser memory only for route calculation and are never logged or stored in Supabase without explicit bookmarking.
-2. **Coordinate Rounding for Analytics:** Any telemetry logs anonymize user coordinates by rounding to 3 decimal places ($\approx 110\text{m}$ precision), preventing residential address identification.
-3. **No PII Tracking:** No third-party tracking scripts, advertising pixels, or invasive session recorders are loaded.
+* **Zero Training on User Prompts:** Prompts sent to the Groq Llama 3 120B model are processed ephemerally with zero data retention.
+* **Strict Spatial Grounding:** System instructions lock the model to the physical telemetry provided in the request context (measured surface temperature, calculated Heat Risk Score, route exposure deltas).
+* **Local Storage Isolation:** Chat history and session titles are stored purely in the user's local browser `localStorage`. No chat transcripts are stored on remote servers.

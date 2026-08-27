@@ -704,6 +704,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     const initialTileUrl = mapStyle === "satellite" ? TILE_LAYERS.satellite : TILE_LAYERS.streets;
     const tileLayer = L.tileLayer(initialTileUrl, {
       maxZoom: 19,
+      maxNativeZoom: 19,
       subdomains: "abcd",
     }).addTo(map);
     tileLayerRef.current = tileLayer;
@@ -915,14 +916,23 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
 
       {/* Point Picking Mode Hint Banner */}
       {pointPickingMode && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] px-4.5 py-2 text-xs font-bold rounded-full shadow-2xl flex items-center gap-2 border bg-slate-900 text-white border-slate-700 animate-pulse">
-          <span className="w-2 h-2 rounded-full bg-amber-400" />
-          <span>Click anywhere on the map to place {pointPickingMode === "origin" ? "Starting Point (A)" : "Destination (B)"}</span>
+        <div className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-[1100] w-[calc(100vw-2rem)] sm:w-auto max-w-sm sm:max-w-md px-3.5 py-2 rounded-2xl sm:rounded-full shadow-2xl flex items-center justify-between sm:justify-center gap-2.5 border bg-slate-950/95 text-white border-white/20 backdrop-blur-xl animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={`w-2.5 h-2.5 rounded-full shrink-0 animate-ping ${pointPickingMode === "origin" ? "bg-emerald-400" : "bg-red-500"}`} />
+            <span className="text-xs font-semibold truncate">
+              <span className="hidden sm:inline">Click map to set </span>
+              <span className="inline sm:hidden">Tap map for </span>
+              <strong className={pointPickingMode === "origin" ? "text-emerald-400" : "text-red-400"}>
+                {pointPickingMode === "origin" ? "Point (A)" : "Point (B)"}
+              </strong>
+            </span>
+          </div>
           <button
+            type="button"
             onClick={() => setPointPickingMode(null)}
-            className="ml-2 px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-[10px] rounded text-slate-300 font-normal"
+            className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white text-[11px] font-mono font-bold rounded-lg border border-white/15 shrink-0 transition-all ml-1"
           >
-            Cancel
+            Cancel ✕
           </button>
         </div>
       )}

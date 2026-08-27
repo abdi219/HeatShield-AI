@@ -179,7 +179,7 @@ export const HeatReportModal: React.FC<HeatReportModalProps> = ({
           <div className="flex items-start justify-between border-b border-slate-200 pb-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-md">
-                <HeatShieldEmblem size={22} isSatellite={false} className="text-white" />
+                <HeatShieldEmblem size={22} isSatellite={true} className="text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.4)]" />
               </div>
               <div>
                 <h1 className="text-lg font-extrabold tracking-tight text-slate-950">HeatShield AI</h1>

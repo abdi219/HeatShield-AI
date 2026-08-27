@@ -12,19 +12,12 @@ import { AIAssistantDrawer } from "@/components/ai/AIAssistantDrawer";
 import { DocsShowcase } from "@/components/docs/DocsShowcase";
 import { MobileBottomDock } from "@/components/hud/MobileBottomDock";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
-import { Layers, Flame, Trees, ChevronRight, Sparkles, MapPin } from "lucide-react";
+import { Layers, Flame, ChevronRight, Sparkles, MapPin } from "lucide-react";
 
 const MapCanvas = dynamic(
   () => import("@/components/map/MapCanvas").then((mod) => mod.MapCanvas),
   { ssr: false }
 );
-
-const CITY_BENCHMARKS: Record<string, { hotspot: [number, number]; shaded: [number, number] }> = {
-  miami: { hotspot: [25.7663, -80.1915], shaded: [25.7753, -80.1873] },
-  phoenix: { hotspot: [33.4484, -112.0740], shaded: [33.4533, -112.0742] },
-  austin: { hotspot: [30.2672, -97.7431], shaded: [30.2625, -97.7430] },
-  las_vegas: { hotspot: [36.1699, -115.1398], shaded: [36.1633, -115.1558] },
-};
 
 export default function HomePage() {
   const {
@@ -88,19 +81,6 @@ export default function HomePage() {
       handleMapClick(viewport.lat, viewport.lng);
     }
   }, []);
-
-  const handleBenchmarkClick = (type: "hotspot" | "shaded") => {
-    let targetCoords: [number, number] | null = null;
-    if (Math.abs(viewport.lat - 25.76) < 0.5) targetCoords = CITY_BENCHMARKS.miami[type];
-    else if (Math.abs(viewport.lat - 33.44) < 0.5) targetCoords = CITY_BENCHMARKS.phoenix[type];
-    else if (Math.abs(viewport.lat - 30.26) < 0.5) targetCoords = CITY_BENCHMARKS.austin[type];
-    else if (Math.abs(viewport.lat - 36.16) < 0.5) targetCoords = CITY_BENCHMARKS.las_vegas[type];
-    else targetCoords = type === "hotspot" ? [viewport.lat + 0.002, viewport.lng - 0.002] : [viewport.lat - 0.003, viewport.lng + 0.003];
-    if (targetCoords) {
-      setViewport({ lat: targetCoords[0], lng: targetCoords[1], zoom: 15.5 });
-      handleMapClick(targetCoords[0], targetCoords[1]);
-    }
-  };
 
   const handlePilotCityJump = (cityName: string) => {
     setSelectedCity(cityName);
@@ -283,34 +263,6 @@ export default function HomePage() {
                   })}
                 </div>
 
-                {/* Quick Benchmarks */}
-                <div className={`pt-2.5 border-t space-y-2 ${border}`}>
-                  <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${textMuted}`}>
-                    Quick Benchmarks
-                  </span>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <button
-                      onClick={() => handleBenchmarkClick("hotspot")}
-                      className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isSatellite
-                        ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/35"
-                        : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
-                        }`}
-                    >
-                      <Flame className="w-3.5 h-3.5 text-red-500" />
-                      Hotspot
-                    </button>
-                    <button
-                      onClick={() => handleBenchmarkClick("shaded")}
-                      className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isSatellite
-                        ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/35"
-                        : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
-                        }`}
-                    >
-                      <Trees className="w-3.5 h-3.5 text-emerald-500" />
-                      Shaded
-                    </button>
-                  </div>
-                </div>
               </div>
 
               {/* Mobile & Tablet Speed-Dial Layers Pill */}
@@ -416,40 +368,6 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    {/* Quick Benchmarks */}
-                    <div className={`pt-2 border-t space-y-1.5 ${border}`}>
-                      <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block ${textMuted}`}>
-                        Quick Benchmarks
-                      </span>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <button
-                          onClick={() => {
-                            handleBenchmarkClick("hotspot");
-                            setIsMobileLayersOpen(false);
-                          }}
-                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isSatellite
-                            ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/35"
-                            : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
-                            }`}
-                        >
-                          <Flame className="w-3.5 h-3.5 text-red-500" />
-                          Hotspot
-                        </button>
-                        <button
-                          onClick={() => {
-                            handleBenchmarkClick("shaded");
-                            setIsMobileLayersOpen(false);
-                          }}
-                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isSatellite
-                            ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/35"
-                            : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
-                            }`}
-                        >
-                          <Trees className="w-3.5 h-3.5 text-emerald-500" />
-                          Shaded
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   <button

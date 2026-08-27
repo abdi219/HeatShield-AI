@@ -10,8 +10,6 @@ import {
   Info,
   TrendingDown,
   Shield,
-  Bookmark,
-  BookmarkCheck,
   FileText,
   Trash2,
   Check,
@@ -587,7 +585,6 @@ export function WhatIfSimulator() {
                     : "bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200"
                 }`}
             >
-              <Bookmark className="w-3.5 h-3.5" />
               <span>Save Plan</span>
             </button>
 
@@ -662,7 +659,6 @@ export function WhatIfSimulator() {
                   }`}
               >
                 <span className="flex items-center gap-1">
-                  <BookmarkCheck className="w-3 h-3 text-sky-400" />
                   Saved Plans ({savedScenarios.length})
                 </span>
                 {isSavedDrawerOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
