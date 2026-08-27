@@ -34,14 +34,14 @@ export const HeatThresholdAlert: React.FC<HeatThresholdAlertProps> = ({ onSelect
   const currentTempC = selectedLocation?.data
     ? selectedLocation.data.surfaceTemp
     : fastestRoute
-    ? fastestRoute.peakTempCelsius
-    : 0;
+      ? fastestRoute.peakTempCelsius
+      : 0;
 
   const currentHrs = selectedLocation?.data
     ? selectedLocation.data.score
     : fastestRoute
-    ? 78
-    : 0;
+      ? Math.round(Math.min(100, Math.max(0, (fastestRoute.peakTempCelsius - 20) * 3.8)))
+      : 0;
 
   // Threshold: Surface Temp >= 37.5°C (99.5°F) or HRS >= 72
   const isHighHeat = currentTempC >= 37.5 || currentHrs >= 72;
@@ -61,13 +61,11 @@ export const HeatThresholdAlert: React.FC<HeatThresholdAlertProps> = ({ onSelect
       role="alert"
       aria-live="assertive"
       aria-label="High Heat Microclimate Advisory Banner"
-      className={`fixed top-14 sm:top-16 inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[1050] max-w-lg w-full transition-all duration-300 animate-in fade-in slide-in-from-top-3 ${
-      isMinimized ? "p-2" : "p-3 sm:p-3.5"
-    } rounded-2xl shadow-2xl border ${
-      isExtremeHeat
-        ? "bg-red-950/90 border-red-500/80 text-white backdrop-blur-xl shadow-red-950/50"
-        : "bg-amber-950/90 border-amber-500/80 text-white backdrop-blur-xl shadow-amber-950/50"
-    }`}>
+      className={`fixed top-14 sm:top-16 inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[1050] max-w-lg w-full transition-all duration-300 animate-in fade-in slide-in-from-top-3 ${isMinimized ? "p-2" : "p-3 sm:p-3.5"
+        } rounded-2xl shadow-2xl border ${isExtremeHeat
+          ? "bg-red-950/90 border-red-500/80 text-white backdrop-blur-xl shadow-red-950/50"
+          : "bg-amber-950/90 border-amber-500/80 text-white backdrop-blur-xl shadow-amber-950/50"
+        }`}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <div className={`p-1.5 rounded-xl ${isExtremeHeat ? "bg-red-500 text-white animate-pulse" : "bg-amber-500 text-slate-950"}`}>
@@ -78,9 +76,8 @@ export const HeatThresholdAlert: React.FC<HeatThresholdAlertProps> = ({ onSelect
               <span className="text-xs font-mono font-extrabold uppercase tracking-wider">
                 {isExtremeHeat ? "Extreme Heat Danger" : "Microclimate Heat Advisory"}
               </span>
-              <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${
-                isExtremeHeat ? "bg-red-500/40 text-red-200 border border-red-400/50" : "bg-amber-500/40 text-amber-200 border border-amber-400/50"
-              }`}>
+              <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${isExtremeHeat ? "bg-red-500/40 text-red-200 border border-red-400/50" : "bg-amber-500/40 text-amber-200 border border-amber-400/50"
+                }`}>
                 {formatTemp(currentTempC)}{unitSymbol} Peak
               </span>
             </div>

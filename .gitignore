@@ -28,3 +28,7 @@
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Editor
+.vscode/
+

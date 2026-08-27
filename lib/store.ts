@@ -1,13 +1,13 @@
 import { create } from 'zustand';
-import { 
-  HeatRiskAssessment, 
-  AnalyzedRoute, 
-  SimulationInterventions, 
-  SimulationResult, 
+import {
+  HeatRiskAssessment,
+  AnalyzedRoute,
+  SimulationInterventions,
+  SimulationResult,
   SavedScenario,
   AIChatMessage,
   AIChatSession,
-  TemperatureUnit 
+  TemperatureUnit
 } from '@/types';
 import { DEFAULT_MAP_CENTER } from './constants';
 
@@ -41,7 +41,7 @@ interface AppState {
     bearing: number;
   };
   setViewport: (viewport: Partial<AppState['viewport']>) => void;
-  
+
   mapStyle: 'streets' | 'satellite';
   setMapStyle: (style: 'streets' | 'satellite') => void;
 
@@ -75,7 +75,7 @@ interface AppState {
   setTravelMode: (mode: AppState['travelMode']) => void;
   setSelectedRouteId: (routeId: 'cool' | 'fastest') => void;
   setPointPickingMode: (mode: 'origin' | 'destination' | null) => void;
-  
+
   fastestRoute: AnalyzedRoute | null;
   coolRoute: AnalyzedRoute | null;
   isCalculatingRoutes: boolean;
@@ -117,12 +117,12 @@ export const useAppStore = create<AppState>((set) => ({
   setActiveTab: (tab) => set({ activeTab: tab }),
 
   temperatureUnit: 'celsius',
-  toggleTemperatureUnit: () => set((state) => ({ 
-    temperatureUnit: state.temperatureUnit === 'celsius' ? 'fahrenheit' : 'celsius' 
+  toggleTemperatureUnit: () => set((state) => ({
+    temperatureUnit: state.temperatureUnit === 'celsius' ? 'fahrenheit' : 'celsius'
   })),
 
   selectedCity: 'Miami',
-  setSelectedCity: (selectedCity) => set({ 
+  setSelectedCity: (selectedCity) => set({
     selectedCity,
     origin: null,
     destination: null,

@@ -53,7 +53,7 @@ body {
   background: rgba(255, 255, 255, 0.16) !important;
   backdrop-filter: blur(24px) saturate(1.4) !important;
   -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
-  box-shadow: 
+  box-shadow:
     inset 0 0 2px 1px rgba(255, 255, 255, 0.45),
     inset 0 0 10px 4px rgba(255, 255, 255, 0.20),
     inset 0 4px 16px rgba(0, 0, 0, 0.10),
@@ -79,7 +79,7 @@ body {
   background: rgba(255, 255, 255, 0.16) !important;
   backdrop-filter: blur(24px) saturate(1.4) !important;
   -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
-  box-shadow: 
+  box-shadow:
     inset 0 0 2px 1px rgba(255, 255, 255, 0.45),
     inset 0 0 10px 4px rgba(255, 255, 255, 0.20),
     0 4px 20px rgba(0, 0, 0, 0.25) !important;
@@ -90,32 +90,55 @@ body {
 
 /* Radar scan beam */
 @keyframes radarSweep {
-  0%   { transform: translateY(-100%); opacity: 0; }
-  30%  { opacity: 0.6; }
-  70%  { opacity: 0.6; }
-  100% { transform: translateY(100vh); opacity: 0; }
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 0.6;
+  }
+
+  70% {
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
 }
 
 .radar-sweep-beam {
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 90px;
-  background: linear-gradient(
-    to bottom,
-    transparent 0%,
-    rgba(255, 255, 255, 0.05) 50%,
-    rgba(255, 255, 255, 0.20) 95%,
-    rgba(255, 255, 255, 0.50) 100%
-  );
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0.20) 95%,
+      rgba(255, 255, 255, 0.50) 100%);
   pointer-events: none;
   z-index: 450;
   animation: radarSweep 1.2s ease-in-out infinite;
 }
 
 /* Custom Scrollbars */
-.scrollbar-thin::-webkit-scrollbar        { width: 5px; height: 5px; }
-.scrollbar-thin::-webkit-scrollbar-track  { background: rgba(241, 245, 249, 0.3); }
-.scrollbar-thin::-webkit-scrollbar-thumb  { background: rgba(148, 163, 184, 0.6); border-radius: 4px; }
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.3);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.6);
+  border-radius: 4px;
+}
 
 /* Leaflet Container & Markers */
 .leaflet-container {
@@ -136,7 +159,9 @@ body {
    Print / PDF Export Formatting (Task 9.1)
    ========================================================================== */
 @media print {
-  body, html {
+
+  body,
+  html {
     position: static !important;
     overflow: visible !important;
     background: #FFFFFF !important;
@@ -161,4 +186,3 @@ body {
     border: none !important;
   }
 }
-

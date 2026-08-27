@@ -387,22 +387,44 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
    */
   const handleMapInteraction = useCallback((lat: number, lng: number) => {
     if (pointPickingModeRef.current === "origin") {
+      const tempName = `Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
       setOrigin({
-        name: `Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
+        name: tempName,
         lat,
         lng,
       });
       setPointPickingMode(null);
+
+      // Asynchronously resolve human-readable street name
+      fetch(`/api/geocode?lat=${lat}&lng=${lng}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.address) {
+            setOrigin({ name: data.address, lat, lng });
+          }
+        })
+        .catch(() => {});
       return;
     }
 
     if (pointPickingModeRef.current === "destination") {
+      const tempName = `Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
       setDestination({
-        name: `Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
+        name: tempName,
         lat,
         lng,
       });
       setPointPickingMode(null);
+
+      // Asynchronously resolve human-readable street name
+      fetch(`/api/geocode?lat=${lat}&lng=${lng}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.address) {
+            setDestination({ name: data.address, lat, lng });
+          }
+        })
+        .catch(() => {});
       return;
     }
 

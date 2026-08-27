@@ -20,9 +20,9 @@ const MapCanvas = dynamic(
 );
 
 const CITY_BENCHMARKS: Record<string, { hotspot: [number, number]; shaded: [number, number] }> = {
-  miami:     { hotspot: [25.7663, -80.1915], shaded: [25.7753, -80.1873] },
-  phoenix:   { hotspot: [33.4484, -112.0740], shaded: [33.4533, -112.0742] },
-  austin:    { hotspot: [30.2672, -97.7431], shaded: [30.2625, -97.7430] },
+  miami: { hotspot: [25.7663, -80.1915], shaded: [25.7753, -80.1873] },
+  phoenix: { hotspot: [33.4484, -112.0740], shaded: [33.4533, -112.0742] },
+  austin: { hotspot: [30.2672, -97.7431], shaded: [30.2625, -97.7430] },
   las_vegas: { hotspot: [36.1699, -115.1398], shaded: [36.1633, -115.1558] },
 };
 
@@ -128,18 +128,17 @@ export default function HomePage() {
     temperatureUnit === "fahrenheit" ? (deltaC * 1.8).toFixed(1) : deltaC.toFixed(1);
 
   // Shorthand class combos
-  const glassCard    = isSatellite ? "sat-glass text-white"  : "street-card text-slate-900";
-  const glassSubcard = isSatellite ? "sat-subglass"         : "street-subcard";
+  const glassCard = isSatellite ? "sat-glass text-white" : "street-card text-slate-900";
+  const glassSubcard = isSatellite ? "sat-subglass" : "street-subcard";
 
-  const textPrimary   = isSatellite ? "text-white"    : "text-slate-900";
+  const textPrimary = isSatellite ? "text-white" : "text-slate-900";
   const textSecondary = isSatellite ? "text-white/80" : "text-slate-500";
-  const textMuted     = isSatellite ? "text-white/60" : "text-slate-400";
-  const border        = isSatellite ? "border-white/25" : "border-slate-200";
+  const textMuted = isSatellite ? "text-white/60" : "text-slate-400";
+  const border = isSatellite ? "border-white/25" : "border-slate-200";
 
   return (
-    <main className={`fixed inset-0 w-full h-full h-[100dvh] overflow-hidden flex flex-col ${
-      isSatellite ? "bg-[#3f413c]" : "bg-white"
-    }`}>
+    <main className={`fixed inset-0 w-full h-full h-[100dvh] overflow-hidden flex flex-col ${isSatellite ? "bg-[#3f413c]" : "bg-white"
+      }`}>
       {/*
         ── Liquid Glass SVG Chromatic Aberration Dispersion Filter ──
       */}
@@ -185,9 +184,8 @@ export default function HomePage() {
               px-5 py-3 rounded-2xl flex flex-col sm:flex-row items-center gap-3
               animate-in fade-in slide-in-from-top-3 duration-200 ${glassCard}`}
             >
-              <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 border ${
-                isSatellite ? "bg-white/20 text-white border-white/40" : "bg-slate-100 text-slate-700 border-slate-200"
-              }`}>
+              <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 border ${isSatellite ? "bg-white/20 text-white border-white/40" : "bg-slate-100 text-slate-700 border-slate-200"
+                }`}>
                 Pilot Zone Notice
               </span>
               <p className={`text-xs font-semibold ${textPrimary}`}>
@@ -198,32 +196,29 @@ export default function HomePage() {
                   <button
                     key={city.name}
                     onClick={() => handlePilotCityJump(city.name)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${
-                      isSatellite
-                        ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/40"
-                        : "bg-white hover:bg-slate-900 hover:text-white text-slate-800 border-slate-200"
-                    }`}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all ${isSatellite
+                      ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/40"
+                      : "bg-white hover:bg-slate-900 hover:text-white text-slate-800 border-slate-200"
+                      }`}
                   >
                     {city.name}
                   </button>
                 ))}
                 <button
                   onClick={() => setToastAlert(null)}
-                  className={`w-5 h-5 ml-1 rounded-full flex items-center justify-center text-xs font-bold ${
-                    isSatellite ? "text-white hover:bg-white/20" : "text-slate-400 hover:bg-slate-100"
-                  }`}
+                  className={`w-5 h-5 ml-1 rounded-full flex items-center justify-center text-xs font-bold ${isSatellite ? "text-white hover:bg-white/20" : "text-slate-400 hover:bg-slate-100"
+                    }`}
                 >✕</button>
               </div>
             </div>
           ) : (
             <div className={`absolute top-20 left-1/2 -translate-x-1/2 z-[1050] max-w-md w-[90%] sm:w-auto
               px-4 py-2.5 rounded-2xl flex items-center justify-between gap-3 shadow-2xl border
-              animate-in fade-in slide-in-from-top-3 duration-200 ${
-                toastAlert.type === "warning"
-                  ? isSatellite
-                    ? "bg-amber-950/85 backdrop-blur-xl border-amber-400/50 text-amber-100 shadow-amber-950/50"
-                    : "bg-amber-50/95 backdrop-blur-xl border-amber-300 text-amber-950 shadow-lg"
-                  : isSatellite
+              animate-in fade-in slide-in-from-top-3 duration-200 ${toastAlert.type === "warning"
+                ? isSatellite
+                  ? "bg-amber-950/85 backdrop-blur-xl border-amber-400/50 text-amber-100 shadow-amber-950/50"
+                  : "bg-amber-50/95 backdrop-blur-xl border-amber-300 text-amber-950 shadow-lg"
+                : isSatellite
                   ? "sat-glass text-white border-white/30"
                   : "street-card text-slate-900 border-slate-200"
               }`}
@@ -236,9 +231,8 @@ export default function HomePage() {
               </div>
               <button
                 onClick={() => setToastAlert(null)}
-                className={`text-xs font-bold p-1 rounded-lg ml-2 transition-all ${
-                  isSatellite ? "hover:bg-white/20 text-white/80" : "hover:bg-slate-200 text-slate-600"
-                }`}
+                className={`text-xs font-bold p-1 rounded-lg ml-2 transition-all ${isSatellite ? "hover:bg-white/20 text-white/80" : "hover:bg-slate-200 text-slate-600"
+                  }`}
               >
                 ✕
               </button>
@@ -262,31 +256,25 @@ export default function HomePage() {
                     <Layers className="w-3.5 h-3.5" />
                     Thermal Layers
                   </span>
-                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full border ${
-                    isSatellite ? "bg-white/20 text-white border-white/40" : "bg-slate-100 text-slate-700 border-slate-200"
-                  }`}>
-                    MICROCLIMATE AI
-                  </span>
                 </div>
 
                 {/* Layer Buttons */}
                 <div className="space-y-1">
                   {(["surface_temp", "heat_risk", "canopy_deficit"] as const).map((layer) => {
                     const labels: Record<string, [string, string]> = {
-                      surface_temp:    ["Surface Temperature", unitSymbol],
-                      heat_risk:       ["Heat Risk Score",     "0–100"],
-                      canopy_deficit:  ["Tree Canopy Deficit", "%"],
+                      surface_temp: ["Surface Temperature", unitSymbol],
+                      heat_risk: ["Heat Risk Score", "0–100"],
+                      canopy_deficit: ["Tree Canopy Deficit", "%"],
                     };
                     const active = activeHeatLayer === layer;
                     return (
                       <button
                         key={layer}
                         onClick={() => setActiveHeatLayer(layer)}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-                          active
-                            ? isSatellite ? "bg-white text-slate-950 shadow-md font-extrabold" : "bg-slate-900 text-white shadow-sm"
-                            : isSatellite ? "text-white hover:bg-white/20" : "text-slate-700 hover:bg-slate-100"
-                        }`}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${active
+                          ? isSatellite ? "bg-white text-slate-950 shadow-md font-extrabold" : "bg-slate-900 text-white shadow-sm"
+                          : isSatellite ? "text-white hover:bg-white/20" : "text-slate-700 hover:bg-slate-100"
+                          }`}
                       >
                         <span>{labels[layer][0]}</span>
                         <span className="font-mono text-[10px] opacity-80">{labels[layer][1]}</span>
@@ -303,22 +291,20 @@ export default function HomePage() {
                   <div className="grid grid-cols-2 gap-1.5">
                     <button
                       onClick={() => handleBenchmarkClick("hotspot")}
-                      className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${
-                        isSatellite
-                          ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/35"
-                          : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
-                      }`}
+                      className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isSatellite
+                        ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/35"
+                        : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
+                        }`}
                     >
                       <Flame className="w-3.5 h-3.5 text-red-500" />
                       Hotspot
                     </button>
                     <button
                       onClick={() => handleBenchmarkClick("shaded")}
-                      className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${
-                        isSatellite
-                          ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/35"
-                          : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
-                      }`}
+                      className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isSatellite
+                        ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/35"
+                        : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
+                        }`}
                     >
                       <Trees className="w-3.5 h-3.5 text-emerald-500" />
                       Shaded
@@ -353,28 +339,25 @@ export default function HomePage() {
                         <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block truncate ${textMuted}`}>
                           Base Map Style
                         </span>
-                        <div className={`p-0.5 rounded-xl flex items-center border ${
-                          isSatellite ? "bg-white/10 border-white/20" : "bg-slate-100 border-slate-200"
-                        }`}>
+                        <div className={`p-0.5 rounded-xl flex items-center border ${isSatellite ? "bg-white/10 border-white/20" : "bg-slate-100 border-slate-200"
+                          }`}>
                           <button
                             type="button"
                             onClick={() => setMapStyle("streets")}
-                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
-                              mapStyle === "streets"
-                                ? isSatellite ? "bg-white text-slate-950 font-extrabold shadow-sm" : "bg-white text-slate-900 font-extrabold shadow-sm"
-                                : isSatellite ? "text-white/70 hover:text-white" : "text-slate-600 hover:text-slate-900"
-                            }`}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${mapStyle === "streets"
+                              ? isSatellite ? "bg-white text-slate-950 font-extrabold shadow-sm" : "bg-white text-slate-900 font-extrabold shadow-sm"
+                              : isSatellite ? "text-white/70 hover:text-white" : "text-slate-600 hover:text-slate-900"
+                              }`}
                           >
                             Street
                           </button>
                           <button
                             type="button"
                             onClick={() => setMapStyle("satellite")}
-                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${
-                              mapStyle === "satellite"
-                                ? isSatellite ? "bg-white text-slate-950 font-extrabold shadow-sm" : "bg-white text-slate-900 font-extrabold shadow-sm"
-                                : isSatellite ? "text-white/70 hover:text-white" : "text-slate-600 hover:text-slate-900"
-                            }`}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all text-center ${mapStyle === "satellite"
+                              ? isSatellite ? "bg-white text-slate-950 font-extrabold shadow-sm" : "bg-white text-slate-900 font-extrabold shadow-sm"
+                              : isSatellite ? "text-white/70 hover:text-white" : "text-slate-600 hover:text-slate-900"
+                              }`}
                           >
                             Satellite
                           </button>
@@ -389,11 +372,10 @@ export default function HomePage() {
                         <button
                           type="button"
                           onClick={toggleHeatmapVisibility}
-                          className={`w-full py-1.5 px-2 rounded-xl text-xs font-bold border transition-all text-center flex items-center justify-center gap-1.5 h-[34px] ${
-                            isHeatmapVisible
-                              ? isSatellite ? "bg-white text-slate-950 font-black shadow-sm" : "bg-slate-900 text-white font-bold shadow-sm"
-                              : isSatellite ? "bg-white/10 text-white/70 border-white/20 hover:bg-white/20" : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
-                          }`}
+                          className={`w-full py-1.5 px-2 rounded-xl text-xs font-bold border transition-all text-center flex items-center justify-center gap-1.5 h-[34px] ${isHeatmapVisible
+                            ? isSatellite ? "bg-white text-slate-950 font-black shadow-sm" : "bg-slate-900 text-white font-bold shadow-sm"
+                            : isSatellite ? "bg-white/10 text-white/70 border-white/20 hover:bg-white/20" : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                            }`}
                         >
                           <Flame className="w-3.5 h-3.5 shrink-0" />
                           <span>{isHeatmapVisible ? "Heat: ON" : "Heat: OFF"}</span>
@@ -409,9 +391,9 @@ export default function HomePage() {
                       <div className="space-y-1">
                         {(["surface_temp", "heat_risk", "canopy_deficit"] as const).map((layer) => {
                           const labels: Record<string, [string, string]> = {
-                            surface_temp:    ["Surface Temperature", unitSymbol],
-                            heat_risk:       ["Heat Risk Score",     "0–100"],
-                            canopy_deficit:  ["Tree Canopy Deficit", "%"],
+                            surface_temp: ["Surface Temperature", unitSymbol],
+                            heat_risk: ["Heat Risk Score", "0–100"],
+                            canopy_deficit: ["Tree Canopy Deficit", "%"],
                           };
                           const active = activeHeatLayer === layer;
                           return (
@@ -421,11 +403,10 @@ export default function HomePage() {
                                 setActiveHeatLayer(layer);
                                 setIsMobileLayersOpen(false);
                               }}
-                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-                                active
-                                  ? isSatellite ? "bg-white text-slate-950 shadow-md font-extrabold" : "bg-slate-900 text-white shadow-sm"
-                                  : isSatellite ? "text-white hover:bg-white/20" : "text-slate-700 hover:bg-slate-100"
-                              }`}
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${active
+                                ? isSatellite ? "bg-white text-slate-950 shadow-md font-extrabold" : "bg-slate-900 text-white shadow-sm"
+                                : isSatellite ? "text-white hover:bg-white/20" : "text-slate-700 hover:bg-slate-100"
+                                }`}
                             >
                               <span>{labels[layer][0]}</span>
                               <span className="font-mono text-[10px] opacity-80">{labels[layer][1]}</span>
@@ -446,11 +427,10 @@ export default function HomePage() {
                             handleBenchmarkClick("hotspot");
                             setIsMobileLayersOpen(false);
                           }}
-                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${
-                            isSatellite
-                              ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/35"
-                              : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
-                          }`}
+                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isSatellite
+                            ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/35"
+                            : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
+                            }`}
                         >
                           <Flame className="w-3.5 h-3.5 text-red-500" />
                           Hotspot
@@ -460,11 +440,10 @@ export default function HomePage() {
                             handleBenchmarkClick("shaded");
                             setIsMobileLayersOpen(false);
                           }}
-                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${
-                            isSatellite
-                              ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/35"
-                              : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
-                          }`}
+                          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all ${isSatellite
+                            ? "bg-white/20 hover:bg-white hover:text-slate-950 text-white border-white/35"
+                            : "bg-white hover:bg-slate-100 text-slate-800 border-slate-200"
+                            }`}
                         >
                           <Trees className="w-3.5 h-3.5 text-emerald-500" />
                           Shaded
@@ -476,11 +455,10 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => setIsMobileLayersOpen(true)}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold shadow-lg border flex items-center gap-2 transition-all ${
-                      isSatellite
-                        ? "bg-white/20 hover:bg-white/30 text-white border-white/35 backdrop-blur-xl"
-                        : "bg-white hover:bg-slate-50 text-slate-900 border-slate-200 shadow-slate-200/60"
-                    }`}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold shadow-lg border flex items-center gap-2 transition-all ${isSatellite
+                      ? "bg-white/20 hover:bg-white/30 text-white border-white/35 backdrop-blur-xl"
+                      : "bg-white hover:bg-slate-50 text-slate-900 border-slate-200 shadow-slate-200/60"
+                      }`}
                   >
                     <Layers className="w-3.5 h-3.5" />
                     <span>
@@ -502,7 +480,7 @@ export default function HomePage() {
             style={{ maxHeight: "calc(100vh - 180px)" }}
           >
             {/* Mobile Drag / Expand Bar */}
-            <div 
+            <div
               onClick={() => setIsLocationCardExpanded(!isLocationCardExpanded)}
               className="flex md:hidden items-center justify-center pt-2 pb-1 cursor-pointer"
             >
@@ -530,18 +508,16 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => setIsLocationCardExpanded(!isLocationCardExpanded)}
-                    className={`flex md:hidden px-1.5 py-0.5 rounded-lg text-[10px] font-bold border transition-all ${
-                      isSatellite ? "border-white/20 text-white/80 hover:bg-white/10" : "border-slate-200 text-slate-600 hover:bg-slate-100"
-                    }`}
+                    className={`flex md:hidden px-1.5 py-0.5 rounded-lg text-[10px] font-bold border transition-all ${isSatellite ? "border-white/20 text-white/80 hover:bg-white/10" : "border-slate-200 text-slate-600 hover:bg-slate-100"
+                      }`}
                     title={isLocationCardExpanded ? "Collapse" : "Expand"}
                   >
                     {isLocationCardExpanded ? "▲" : "▼"}
                   </button>
                   <button
                     onClick={() => setSelectedLocation(null)}
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ml-1 ${
-                      isSatellite ? "text-white hover:bg-white/20" : "text-slate-400 hover:bg-slate-100"
-                    }`}
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ml-1 ${isSatellite ? "text-white hover:bg-white/20" : "text-slate-400 hover:bg-slate-100"
+                      }`}
                   >✕</button>
                 </div>
               </div>
@@ -559,11 +535,10 @@ export default function HomePage() {
                       +{formatDelta(selectedLocation.data.deltaAnomaly)}{unitSymbol} vs amb
                     </span>
                   </div>
-                  <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                    selectedLocation.data.score > 80 ? "bg-red-500 text-white"
+                  <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${selectedLocation.data.score > 80 ? "bg-red-500 text-white"
                     : selectedLocation.data.score > 50 ? "bg-amber-500 text-white"
-                    : "bg-sky-500 text-white"
-                  }`}>
+                      : "bg-sky-500 text-white"
+                    }`}>
                     HRS {selectedLocation.data.score} • {selectedLocation.data.level}
                   </span>
                 </div>
@@ -574,9 +549,8 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => setIsLocationCardExpanded(true)}
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border shrink-0 transition-all ${
-                      isSatellite ? "bg-white text-slate-950 font-black shadow-sm" : "bg-slate-900 text-white font-bold shadow-sm"
-                    }`}
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border shrink-0 transition-all ${isSatellite ? "bg-white text-slate-950 font-black shadow-sm" : "bg-slate-900 text-white font-bold shadow-sm"
+                      }`}
                   >
                     Details ▲
                   </button>
@@ -606,11 +580,10 @@ export default function HomePage() {
                     {selectedLocation.data.score}
                     <span className={`text-xs font-normal ${textMuted}`}>/100</span>
                   </div>
-                  <span className={`inline-block mt-1 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                    selectedLocation.data.score > 80 ? "bg-red-500 text-white"
+                  <span className={`inline-block mt-1 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${selectedLocation.data.score > 80 ? "bg-red-500 text-white"
                     : selectedLocation.data.score > 50 ? "bg-amber-500 text-white"
-                    : "bg-sky-500 text-white"
-                  }`}>
+                      : "bg-sky-500 text-white"
+                    }`}>
                     {selectedLocation.data.level}
                   </span>
                 </div>
@@ -654,28 +627,26 @@ export default function HomePage() {
               </div>
 
               {/* Insight */}
-              <div className={`p-2.5 rounded-xl text-[10px] leading-relaxed ${
-                isSatellite
-                  ? "bg-white/15 border border-white/30 text-white"
-                  : "bg-sky-50 border border-sky-200 text-sky-900"
-              }`}>
+              <div className={`p-2.5 rounded-xl text-[10px] leading-relaxed ${isSatellite
+                ? "bg-white/15 border border-white/30 text-white"
+                : "bg-sky-50 border border-sky-200 text-sky-900"
+                }`}>
                 <span className="font-bold block mb-0.5">Actionable Insight</span>
                 {selectedLocation.data.score > 70
                   ? "Extreme asphalt heat absorption. Prioritize high-albedo cool pavement coating and shade canopies."
                   : selectedLocation.data.score > 40
-                  ? "Moderate thermal exposure. Urban tree canopy expansion recommended to reduce radiant heat."
-                  : "Corridor benefits from microclimate cooling sanctuary and dense vegetation coverage."}
+                    ? "Moderate thermal exposure. Urban tree canopy expansion recommended to reduce radiant heat."
+                    : "Corridor benefits from microclimate cooling sanctuary and dense vegetation coverage."}
               </div>
 
               {/* Action Buttons */}
               <div className="pt-1">
                 <button
                   onClick={() => setIsAIAssistantOpen(true)}
-                  className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center transition-all shadow-md ${
-                    isSatellite
-                      ? "bg-white text-slate-950 hover:bg-slate-100 font-extrabold"
-                      : "bg-slate-900 hover:bg-slate-800 text-white"
-                  }`}
+                  className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center transition-all shadow-md ${isSatellite
+                    ? "bg-white text-slate-950 hover:bg-slate-100 font-extrabold"
+                    : "bg-slate-900 hover:bg-slate-800 text-white"
+                    }`}
                 >
                   Consult AI Heat Assistant
                 </button>
@@ -692,8 +663,8 @@ export default function HomePage() {
             {activeHeatLayer === "heat_risk"
               ? "Heat Risk Scale (HRS)"
               : activeHeatLayer === "canopy_deficit"
-              ? "Canopy Deficit Scale"
-              : "Thermal Heat Scale"}
+                ? "Canopy Deficit Scale"
+                : "Thermal Heat Scale"}
           </span>
           <div className="flex items-center gap-3.5">
             {activeHeatLayer === "heat_risk" ? (
@@ -749,8 +720,8 @@ export default function HomePage() {
                   {activeHeatLayer === "heat_risk"
                     ? "Heat Risk (HRS)"
                     : activeHeatLayer === "canopy_deficit"
-                    ? "Canopy Deficit"
-                    : "Thermal Scale"}
+                      ? "Canopy Deficit"
+                      : "Thermal Scale"}
                 </span>
                 <button
                   type="button"
@@ -808,11 +779,10 @@ export default function HomePage() {
             <button
               type="button"
               onClick={() => setIsMobileLegendOpen(true)}
-              className={`px-3 py-1.5 rounded-xl shadow-lg border text-[11px] font-bold flex items-center gap-1 transition-all ${
-                isSatellite
-                  ? "bg-white/20 hover:bg-white/30 text-white border-white/30"
-                  : "bg-white hover:bg-slate-50 text-slate-800 border-slate-200"
-              }`}
+              className={`px-3 py-1.5 rounded-xl shadow-lg border text-[11px] font-bold flex items-center gap-1 transition-all ${isSatellite
+                ? "bg-white/20 hover:bg-white/30 text-white border-white/30"
+                : "bg-white hover:bg-slate-50 text-slate-800 border-slate-200"
+                }`}
             >
               Scale
             </button>

@@ -138,9 +138,9 @@ export function DocsShowcase() {
     {
       id: 4,
       category: "privacy",
-      question: "How does the AI Assistant stay accurate without guessing?",
+      question: "How does the AI Assistant estimate temperatures without guessing?",
       answer:
-        "The AI Assistant reads live measured temperatures and route stats directly from your active screen. It is strictly locked to live data and never makes up numbers.",
+        "The AI Assistant reads live measured microclimate temperatures and route stats directly from your active screen telemetry. It is strictly anchored to live data and mathematical models.",
     },
     {
       id: 5,
