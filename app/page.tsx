@@ -5,14 +5,13 @@ import dynamic from "next/dynamic";
 import { useAppStore } from "@/lib/store";
 import { CITY_PRESETS } from "@/lib/constants";
 import { TopNav } from "@/components/hud/TopNav";
-import { HeatThresholdAlert } from "@/components/hud/HeatThresholdAlert";
 import { RouteFinder } from "@/components/routes/RouteFinder";
 import { WhatIfSimulator } from "@/components/simulator/WhatIfSimulator";
 import { AIAssistantDrawer } from "@/components/ai/AIAssistantDrawer";
 import { DocsShowcase } from "@/components/docs/DocsShowcase";
 import { MobileBottomDock } from "@/components/hud/MobileBottomDock";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
-import { Layers, Flame, ChevronRight, Sparkles, MapPin } from "lucide-react";
+import { Layers, Flame, ChevronRight, Sparkles, MapPin, X } from "lucide-react";
 
 const MapCanvas = dynamic(
   () => import("@/components/map/MapCanvas").then((mod) => mod.MapCanvas),
@@ -148,9 +147,6 @@ export default function HomePage() {
       </svg>
 
       <TopNav />
-
-      {/* ── Real-Time Extreme Heat Safety Advisory Banner (Task 9.2) ── */}
-      <HeatThresholdAlert />
 
       <div className="absolute inset-0 w-full h-full">
         <ErrorBoundary fallbackTitle="Map Rendering Unavailable" fallbackMessage="The spatial map canvas encountered a rendering issue. Click retry to reload.">
@@ -410,7 +406,7 @@ export default function HomePage() {
               <div className="flex items-start justify-between">
                 <div className="min-w-0 pr-2">
                   <div className="flex items-center gap-1.5 mb-0.5">
-                    <MapPin className={`w-3 h-3 shrink-0 ${textSecondary}`} />
+                    <MapPin className={`w-3.5 h-3.5 shrink-0 ${isSatellite ? "text-sky-400" : "text-slate-700"}`} />
                     <span className={`text-[10px] font-mono font-bold uppercase tracking-widest ${textSecondary}`}>
                       Street-Level Telemetry
                     </span>
@@ -422,21 +418,29 @@ export default function HomePage() {
                     {selectedLocation.lat.toFixed(4)}°N, {Math.abs(selectedLocation.lng).toFixed(4)}°W
                   </span>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsLocationCardExpanded(!isLocationCardExpanded)}
-                    className={`flex md:hidden px-1.5 py-0.5 rounded-lg text-[10px] font-bold border transition-all ${isSatellite ? "border-white/20 text-white/80 hover:bg-white/10" : "border-slate-200 text-slate-600 hover:bg-slate-100"
+                    className={`flex md:hidden px-2 py-1 rounded-xl text-[10px] font-mono font-bold border transition-all ${isSatellite
+                        ? "bg-white/10 hover:bg-white/20 text-white border-white/20"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
                       }`}
                     title={isLocationCardExpanded ? "Collapse" : "Expand"}
                   >
                     {isLocationCardExpanded ? "▲" : "▼"}
                   </button>
                   <button
+                    type="button"
                     onClick={() => setSelectedLocation(null)}
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ml-1 ${isSatellite ? "text-white hover:bg-white/20" : "text-slate-400 hover:bg-slate-100"
+                    className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all ${isSatellite
+                        ? "bg-white/10 hover:bg-white/25 text-white border border-white/20 shadow-sm"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 shadow-sm"
                       }`}
-                  >✕</button>
+                    title="Close Telemetry"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             </div>

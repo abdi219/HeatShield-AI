@@ -63,29 +63,29 @@ export const HeatThresholdAlert: React.FC<HeatThresholdAlertProps> = ({ onSelect
       aria-label="High Heat Microclimate Advisory Banner"
       className={`fixed top-14 sm:top-16 inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 z-[1050] max-w-lg w-full transition-all duration-300 animate-in fade-in slide-in-from-top-3 ${isMinimized ? "p-2" : "p-3 sm:p-3.5"
         } rounded-2xl shadow-2xl border ${isExtremeHeat
-          ? "bg-red-950/90 border-red-500/80 text-white backdrop-blur-xl shadow-red-950/50"
-          : "bg-amber-950/90 border-amber-500/80 text-white backdrop-blur-xl shadow-amber-950/50"
+          ? "bg-slate-900/95 border-rose-500/60 text-white backdrop-blur-xl shadow-rose-950/40"
+          : "bg-slate-900/95 border-sky-500/40 text-white backdrop-blur-xl shadow-slate-950/60"
         }`}>
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <div className={`p-1.5 rounded-xl ${isExtremeHeat ? "bg-red-500 text-white animate-pulse" : "bg-amber-500 text-slate-950"}`}>
+        <div className="flex items-center gap-2.5">
+          <div className={`p-1.5 rounded-xl ${isExtremeHeat ? "bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse" : "bg-sky-500/20 text-sky-400 border border-sky-500/40"}`}>
             {isExtremeHeat ? <Flame className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-extrabold uppercase tracking-wider">
+              <span className="text-xs font-mono font-extrabold uppercase tracking-wider text-slate-100">
                 {isExtremeHeat ? "Extreme Heat Danger" : "Microclimate Heat Advisory"}
               </span>
-              <span className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${isExtremeHeat ? "bg-red-500/40 text-red-200 border border-red-400/50" : "bg-amber-500/40 text-amber-200 border border-amber-400/50"
+              <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${isExtremeHeat ? "bg-rose-500/30 text-rose-200 border border-rose-400/40" : "bg-sky-500/30 text-sky-200 border border-sky-400/40"
                 }`}>
                 {formatTemp(currentTempC)}{unitSymbol} Peak
               </span>
             </div>
             {!isMinimized && (
-              <p className="text-[11px] text-white/80 font-normal leading-tight mt-0.5">
+              <p className="text-[11px] text-slate-300 font-normal leading-tight mt-0.5">
                 {isExtremeHeat
                   ? "Continuous exposure limit: <10 mins. Seek active shaded transit corridors."
-                  : "High thermal stress detected. Hydrate and use tree-covered cool routes."}
+                  : "Elevated urban thermal stress detected. Hydrate and follow shaded cool paths."}
               </p>
             )}
           </div>

@@ -58,17 +58,17 @@ export function findMatchingPilotCity(lat: number, lng: number, placeName?: stri
   return null;
 }
 
-// Verified High-Impact City Commute Corridors
+// Verified High-Impact City Commute Corridors with Dual Street Alternatives
 export const CITY_COMMUTE_CORRIDORS: Record<string, Array<{ name: string; origin: { name: string; lat: number; lng: number }; destination: { name: string; lat: number; lng: number } }>> = {
   Phoenix: [
     {
-      name: "Footprint Arena to Hance Park",
-      origin: { name: "Footprint Center Arena", lat: 33.4457, lng: -112.0712 },
+      name: "Encanto to Hance Deck Park",
+      origin: { name: "Encanto Park Shaded Lagoon", lat: 33.4750, lng: -112.0780 },
       destination: { name: "Margaret T. Hance Deck Park", lat: 33.4628, lng: -112.0738 },
     },
     {
-      name: "Art Museum to Heritage Square",
-      origin: { name: "Phoenix Art Museum Plaza", lat: 33.4673, lng: -112.0735 },
+      name: "Grand Ave to Heritage Square",
+      origin: { name: "Grand Avenue Arts District", lat: 33.4560, lng: -112.0880 },
       destination: { name: "Heritage Square Cultural Hub", lat: 33.4496, lng: -112.0645 },
     },
   ],
@@ -79,33 +79,33 @@ export const CITY_COMMUTE_CORRIDORS: Record<string, Array<{ name: string; origin
       destination: { name: "Historic 6th Street Corridor", lat: 30.2678, lng: -97.7410 },
     },
     {
-      name: "Texas Capitol to Lady Bird Trail",
-      origin: { name: "Texas State Capitol Plaza", lat: 30.2747, lng: -97.7404 },
-      destination: { name: "Ann and Roy Butler Lake Trail", lat: 30.2618, lng: -97.7435 },
+      name: "Clarksville to Rainey Street",
+      origin: { name: "Clarksville Historic Greenway", lat: 30.2760, lng: -97.7600 },
+      destination: { name: "Rainey Street Canopy District", lat: 30.2590, lng: -97.7380 },
     },
   ],
   Miami: [
     {
-      name: "Brickell to Maurice Ferré Park",
-      origin: { name: "Brickell Financial Hub", lat: 25.7668, lng: -80.1932 },
-      destination: { name: "Maurice Ferré Waterfront Park", lat: 25.7850, lng: -80.1870 },
+      name: "Little Havana to Bayfront Park",
+      origin: { name: "Little Havana Cultural Plaza", lat: 25.7720, lng: -80.2150 },
+      destination: { name: "Bayfront Park Shaded Canopy", lat: 25.7780, lng: -80.1890 },
     },
     {
-      name: "Vizcaya to Bayfront Promenade",
-      origin: { name: "Vizcaya Station & Gardens", lat: 25.7495, lng: -80.2085 },
-      destination: { name: "Bayfront Park Shaded Canopy", lat: 25.7745, lng: -80.1865 },
+      name: "Design District to Downtown",
+      origin: { name: "Design District Plaza", lat: 25.8130, lng: -80.1920 },
+      destination: { name: "Downtown Waterfront Promenade", lat: 25.7750, lng: -80.1900 },
     },
   ],
   "Las Vegas": [
     {
-      name: "Arts District to Container Park",
-      origin: { name: "18b Arts District Casino Hub", lat: 36.1558, lng: -115.1525 },
-      destination: { name: "Downtown Container Park Plaza", lat: 36.1685, lng: -115.1375 },
+      name: "Arts District to Fremont East",
+      origin: { name: "18b Arts District Plaza", lat: 36.1550, lng: -115.1530 },
+      destination: { name: "Fremont East Shaded District", lat: 36.1690, lng: -115.1390 },
     },
     {
-      name: "Fremont to Symphony Park",
-      origin: { name: "Fremont Street Experience", lat: 36.1706, lng: -115.1440 },
-      destination: { name: "Symphony Park Tree Promenade", lat: 36.1688, lng: -115.1542 },
+      name: "Charleston to Container Park",
+      origin: { name: "Charleston Historic Gateway", lat: 36.1590, lng: -115.1580 },
+      destination: { name: "Downtown Container Park Plaza", lat: 36.1685, lng: -115.1375 },
     },
   ],
 };

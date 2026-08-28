@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useAppStore } from "@/lib/store";
 import { getMockHeatGrid } from "@/lib/fortyguard";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, X } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -21,8 +21,10 @@ interface MapCanvasProps {
   onLocationSelect?: (lat: number, lng: number) => void;
 }
 
+const CARTO_KEY = process.env.NEXT_PUBLIC_CARTO_API_KEY || "cb1_2h12_1_538b4d3c848f9eef7624a175";
+
 const TILE_LAYERS = {
-  streets: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+  streets: `https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png?key=${CARTO_KEY}`,
   satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
 };
 
@@ -146,6 +148,8 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     setOrigin,
     setDestination,
     setPointPickingMode,
+    clearRoutes,
+    clearCalculatedRoutes,
   } = useAppStore();
 
   const isSatellite = mapStyle === "satellite";
@@ -386,8 +390,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
    * Unifies Map & Node Click Handling
    */
   const handleMapInteraction = useCallback((lat: number, lng: number) => {
-    if (pointPickingModeRef.current === "origin") {
+    const currentMode = useAppStore.getState().pointPickingMode;
+    if (currentMode === "origin") {
       const tempName = `Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+      clearCalculatedRoutes();
       setOrigin({
         name: tempName,
         lat,
@@ -403,12 +409,13 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
             setOrigin({ name: data.address, lat, lng });
           }
         })
-        .catch(() => {});
+        .catch(() => { });
       return;
     }
 
-    if (pointPickingModeRef.current === "destination") {
+    if (currentMode === "destination") {
       const tempName = `Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+      clearCalculatedRoutes();
       setDestination({
         name: tempName,
         lat,
@@ -424,14 +431,19 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
             setDestination({ name: data.address, lat, lng });
           }
         })
-        .catch(() => {});
+        .catch(() => { });
       return;
     }
 
     if (onLocationSelect) {
       onLocationSelect(lat, lng);
     }
-  }, [onLocationSelect, setOrigin, setDestination, setPointPickingMode]);
+  }, [onLocationSelect, setOrigin, setDestination, setPointPickingMode, clearCalculatedRoutes]);
+
+  const handleMapInteractionRef = useRef(handleMapInteraction);
+  useEffect(() => {
+    handleMapInteractionRef.current = handleMapInteraction;
+  });
 
   // Smooth Zoom Controls
   const handleZoomIn = () => {
@@ -482,9 +494,11 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       L.marker([destination.lat, destination.lng], { icon: iconB, interactive: false, zIndexOffset: 1000 }).addTo(routeGroupRef.current);
     }
 
-    // If no calculated routes yet, fit bounds to pins if both exist
-    if (!fastestRoute && !coolRoute) {
-      if (origin && destination) {
+    // If pointPickingMode is active (user is currently selecting/changing a pin),
+    // or if either origin/destination is missing, or if no calculated routes exist,
+    // do NOT draw old disconnected route polylines!
+    if (pointPickingMode || !origin || !destination || (!fastestRoute && !coolRoute)) {
+      if (origin && destination && !pointPickingMode) {
         const bounds = L.latLngBounds([[origin.lat, origin.lng], [destination.lat, destination.lng]]);
         map.fitBounds(bounds, { paddingTopLeft: [420, 60], paddingBottomRight: [60, 60], maxZoom: 15, animate: true });
       }
@@ -573,7 +587,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
         });
       }
     }
-  }, [activeTab, fastestRoute, coolRoute, selectedRouteId, origin, destination]);
+  }, [activeTab, fastestRoute, coolRoute, selectedRouteId, origin, destination, pointPickingMode]);
 
   // Render Simulation Sector Boundary & Floating Zone Badge
   useEffect(() => {
@@ -743,7 +757,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
     });
 
     map.on("click", (e: L.LeafletMouseEvent) => {
-      handleMapInteraction(e.latlng.lat, e.latlng.lng);
+      handleMapInteractionRef.current(e.latlng.lat, e.latlng.lng);
     });
 
     let mouseMoveThrottleId: number | null = null;
@@ -916,13 +930,21 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
 
       {/* Point Picking Mode Hint Banner */}
       {pointPickingMode && (
-        <div className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-[1100] w-[calc(100vw-2rem)] sm:w-auto max-w-sm sm:max-w-md px-3.5 py-2 rounded-2xl sm:rounded-full shadow-2xl flex items-center justify-between sm:justify-center gap-2.5 border bg-slate-950/95 text-white border-white/20 backdrop-blur-xl animate-in fade-in slide-in-from-top-2">
+        <div className={`fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-[1100] w-[calc(100vw-2rem)] sm:w-auto max-w-sm sm:max-w-md px-4 py-2 rounded-2xl sm:rounded-full shadow-2xl flex items-center justify-between sm:justify-center gap-3 border backdrop-blur-xl animate-in fade-in slide-in-from-top-2 ${
+          isSatellite
+            ? "sat-glass text-white border-white/35 shadow-black/40"
+            : "street-card text-slate-900 border-slate-200/90 shadow-xl"
+        }`}>
           <div className="flex items-center gap-2 min-w-0">
-            <span className={`w-2.5 h-2.5 rounded-full shrink-0 animate-ping ${pointPickingMode === "origin" ? "bg-emerald-400" : "bg-red-500"}`} />
-            <span className="text-xs font-semibold truncate">
+            <span className={`w-2.5 h-2.5 rounded-full shrink-0 animate-ping ${pointPickingMode === "origin" ? "bg-emerald-400" : "bg-rose-500"}`} />
+            <span className={`text-xs font-semibold truncate ${isSatellite ? "text-white" : "text-slate-900"}`}>
               <span className="hidden sm:inline">Click map to set </span>
               <span className="inline sm:hidden">Tap map for </span>
-              <strong className={pointPickingMode === "origin" ? "text-emerald-400" : "text-red-400"}>
+              <strong className={
+                pointPickingMode === "origin"
+                  ? isSatellite ? "text-emerald-300 font-extrabold" : "text-emerald-600 font-extrabold"
+                  : isSatellite ? "text-rose-300 font-extrabold" : "text-rose-600 font-extrabold"
+              }>
                 {pointPickingMode === "origin" ? "Point (A)" : "Point (B)"}
               </strong>
             </span>
@@ -930,9 +952,14 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
           <button
             type="button"
             onClick={() => setPointPickingMode(null)}
-            className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white text-[11px] font-mono font-bold rounded-lg border border-white/15 shrink-0 transition-all ml-1"
+            className={`px-3 py-1 text-[11px] font-mono font-bold rounded-xl sm:rounded-full border shrink-0 transition-all ml-1.5 flex items-center gap-1.5 ${
+              isSatellite
+                ? "bg-white/15 hover:bg-white/30 text-white border-white/30 shadow-sm"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 shadow-sm"
+            }`}
           >
-            Cancel ✕
+            <span>Cancel</span>
+            <X className="w-3 h-3" />
           </button>
         </div>
       )}

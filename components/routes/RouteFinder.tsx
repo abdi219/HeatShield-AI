@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAppStore } from "@/lib/store";
 import { CITY_PRESETS, CITY_COMMUTE_CORRIDORS } from "@/lib/constants";
 import { HeatShieldEmblem } from "@/components/common/HeatShieldEmblem";
@@ -83,6 +83,7 @@ export function RouteFinder() {
     setSelectedRouteId,
     setRoutes,
     clearRoutes,
+    clearCalculatedRoutes,
     isCalculatingRoutes,
     setIsCalculatingRoutes,
     temperatureUnit,
@@ -247,12 +248,9 @@ export function RouteFinder() {
     }
   };
 
-  // Instant Travel Mode Switch (Walk / Cycle / Drive)
+  // Travel Mode Selection (Walk / Cycle / Drive)
   const handleModeChange = (mode: "walking" | "cycling" | "driving") => {
     setTravelMode(mode);
-    if (origin && destination) {
-      handleCalculateRoutes(mode, origin, destination);
-    }
   };
 
   // Apply City Corridor Preset
@@ -470,7 +468,10 @@ export function RouteFinder() {
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setPointPickingMode(pointPickingMode === "origin" ? null : "origin")}
+                onClick={() => {
+                  clearCalculatedRoutes();
+                  setPointPickingMode(pointPickingMode === "origin" ? null : "origin");
+                }}
                 className={`p-1.5 rounded-lg text-xs font-bold transition-all ${pointPickingMode === "origin"
                     ? "bg-amber-400 text-slate-950 shadow-md ring-2 ring-amber-300"
                     : isSatellite ? "text-white/80 hover:text-white hover:bg-white/20" : "text-slate-400 hover:text-slate-800 hover:bg-slate-200"
@@ -509,7 +510,10 @@ export function RouteFinder() {
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setPointPickingMode(pointPickingMode === "destination" ? null : "destination")}
+                onClick={() => {
+                  clearCalculatedRoutes();
+                  setPointPickingMode(pointPickingMode === "destination" ? null : "destination");
+                }}
                 className={`p-1.5 rounded-lg text-xs font-bold transition-all ${pointPickingMode === "destination"
                     ? "bg-red-500 text-white shadow-md ring-2 ring-red-300"
                     : isSatellite ? "text-white/80 hover:text-white hover:bg-white/20" : "text-slate-400 hover:text-slate-800 hover:bg-slate-200"

@@ -82,6 +82,7 @@ interface AppState {
   setRoutes: (fastest: AnalyzedRoute | null, cool: AnalyzedRoute | null) => void;
   setIsCalculatingRoutes: (isCalculating: boolean) => void;
   clearRoutes: () => void;
+  clearCalculatedRoutes: () => void;
 
   // Simulation State
   simulationInterventions: SimulationInterventions;
@@ -147,7 +148,7 @@ export const useAppStore = create<AppState>((set) => ({
     viewport: { ...state.viewport, ...newViewport }
   })),
 
-  mapStyle: 'satellite',
+  mapStyle: 'streets',
   setMapStyle: (mapStyle) => set({ mapStyle }),
 
   isHeatmapVisible: true,
@@ -185,6 +186,11 @@ export const useAppStore = create<AppState>((set) => ({
     fastestRoute: null,
     coolRoute: null,
     pointPickingMode: null,
+    isCalculatingRoutes: false,
+  }),
+  clearCalculatedRoutes: () => set({
+    fastestRoute: null,
+    coolRoute: null,
     isCalculatingRoutes: false,
   }),
 
