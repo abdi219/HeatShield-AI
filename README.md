@@ -410,7 +410,7 @@ To maintain complete transparency with hackathon evaluators, the following genui
 
 ## Local Setup & Quick Start Guide
 
-> **🏆 Note for Hackathon Judges & Evaluators:**  
+> **Note for Hackathon Judges & Evaluators:**  
 > **HeatShield AI runs 100% out of the box with zero manual configuration or API keys needed!**  
 > * **Watermark-Free Maps:** High-resolution street and satellite basemaps load immediately with zero watermarks.  
 > * **Thermal Engine & Simulator:** The FortyGuard spatial engine runs locally, generating full 60 FPS microclimate grids, one-click point inspections, and parametric cooling simulations out of the box.  
