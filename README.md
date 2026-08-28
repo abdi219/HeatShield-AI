@@ -20,23 +20,21 @@ Traditional meteorological tools only provide broad regional forecasts from dist
 ## Table of Contents
 
 1. [Executive Summary](#executive-summary)
-2. [Interactive Feature Showcase](#interactive-feature-showcase)
-3. [The Connected Ecosystem (How Every Feature Works Together)](#the-connected-ecosystem-how-every-feature-works-together)
-4. [Platform Feature Matrix](#platform-feature-matrix)
-5. [Official Architecture & Documentation Index](#official-architecture--documentation-index)
-6. [Hackathon Development Sprint Timeline & Milestones](#hackathon-development-sprint-timeline--milestones)
-7. [Technical Architecture & Core Equations](#technical-architecture--core-equations)
-8. [FortyGuard API Integration (Proof of Integration)](#fortyguard-api-integration-proof-of-integration)
-   - [Real FortyGuard API Request Payload](#1-real-fortyguard-api-request-payload)
-   - [Real FortyGuard API Output Response](#2-real-fortyguard-api-output-response)
-9. [1-Minute Local Setup & Run Guide](#1-minute-local-setup--run-guide)
-10. [Environment Variable Configuration](#environment-variable-configuration)
-11. [Security & API Key Isolation Confirmation](#security--api-key-isolation-confirmation)
-12. [Repository Directory Structure](#-repository-directory-structure)
-13. [Future Roadmap & Planned Innovations](#-future-roadmap--planned-innovations)
-14. [Known Limitations & Technical Notes](#known-limitations--technical-notes)
-15. [Complete Technology Stack & Libraries](#complete-technology-stack--libraries)
-16. [Hackathon Submission Information](#hackathon-submission-information)
+2. [Hackathon Development Sprint Timeline](#hackathon-development-sprint-timeline)
+3. [Interactive Feature Showcase](#interactive-feature-showcase)
+4. [The Connected Ecosystem (How Features Work Together)](#the-connected-ecosystem-how-features-work-together)
+5. [Platform Feature Matrix](#platform-feature-matrix)
+6. [Technical Architecture & Equations](#technical-architecture--equations)
+7. [FortyGuard API Integration & Proof](#fortyguard-api-integration--proof)
+8. [Official Architecture & Documentation Index](#official-architecture--documentation-index)
+9. [Repository Directory Structure](#repository-directory-structure)
+10. [Future Roadmap & Planned Innovations](#future-roadmap--planned-innovations)
+11. [Known Limitations & Technical Notes](#known-limitations--technical-notes)
+12. [Local Setup & Quick Start Guide](#local-setup--quick-start-guide)
+13. [Environment Variable Configuration](#environment-variable-configuration)
+14. [Security & Key Isolation Policy](#security--key-isolation-policy)
+15. [Technology Stack & Dependencies](#technology-stack--dependencies)
+16. [Hackathon Submission Details](#hackathon-submission-details)
 
 ---
 
@@ -50,6 +48,20 @@ Urban Heat Islands (UHIs) cause street-level temperatures to fluctuate by as muc
 3. **Avoid:** Find cooler walking paths with an automated **Cool Route Finder** that balances travel time against heat exposure.
 4. **Reduce:** Model cooling interventions using an interactive **What-If Urban Mitigation Simulator** (tree canopy, high-albedo cool pavements, solar/shade canopies).
 5. **Report:** Generate printable, executive-ready PDF resilience summaries.
+
+---
+
+## Hackathon Development Sprint Timeline
+
+The HeatShield AI platform was built during the FortyGuard Hackathon 2026 sprint. The timeline below documents the chronological progression and commit milestones:
+
+| Date & Phase | Milestone | Key Technical Deliverables & Commit Highlights |
+| :--- | :--- | :--- |
+| **Aug 17, 2026**<br>*(Day 0 — Initial Commit)* | **M1: Architecture Foundation & Scaffolding** | Initial repository commit; structured Next.js 14 App Router, TypeScript data contracts, glassmorphic UI design tokens, Turf.js spatial calculation foundation, and initial Leaflet Canvas 2D engine setup. |
+| **Aug 18, 2026**<br>*(Day 1 — Hackathon Kickoff)* | **M2: Official FortyGuard API Key Integration** | Hackathon officially commenced; received and integrated official **FortyGuard Temperature API credentials** into secure server-side Route Handlers (`/api/heat/location`, `/api/heat/grid`), connecting live hyper-local 30m grid data ingestion. |
+| **Aug 19–21, 2026**<br>*(Days 2–4)* | **M3–M4: Microclimate Heatmap & Cool Route Engine** | Formulated polyline heat-sampling algorithm, OSRM real street network snapping, HeatShield Route Safety Score (HSS), automatic reverse-geocoding, and responsive SVG thermal elevation profile. |
+| **Aug 22–24, 2026**<br>*(Days 5–7)* | **M5–M6: What-If Simulator & Grounded AI Copilot** | Developed parametric What-If Mitigation Simulator (canopy evapotranspiration, albedo reflection models), 3-mode map visualizer, and integrated Groq Llama 3 120B context-anchored AI assistant. |
+| **Aug 25–28, 2026**<br>*(Days 8–11)* | **M7–M9: Mobile Suite, PDF Reports & Basemap API** | Built touch-optimized mobile navigation dock, executive PDF report exporter, integrated authorized CARTO Basemaps API key for watermark-free cartography, and completed final production hardening. |
 
 ---
 
@@ -113,7 +125,7 @@ One-click printable and downloadable executive report summarizing corridor therm
 Fully optimized mobile experience tailored for pedestrian field usage and thumb-zone ergonomics.
 
 <p align="center">
-  <img src="./docs/screenshots/mobileUI.jpeg" alt="Mobile UI Touch Navigation" width="380" />
+  <img src="./docs/screenshots/mobileUI.png" alt="Mobile UI Touch Navigation" width="380" />
 </p>
 
 * **Floating Bottom Dock:** Ergonomic thumb-zone navigation across Map, Routes, Simulator, AI Copilot, and Docs.
@@ -122,28 +134,40 @@ Fully optimized mobile experience tailored for pedestrian field usage and thumb-
 
 ---
 
-## The Connected Ecosystem (How Every Feature Works Together)
+## The Connected Ecosystem (How Features Work Together)
 
-   [ 1. Live Heatmap Canvas ] ──────────────► [ 2. Location Inspector & HRS ]
-               │                                            │
-               ▼                                            ▼
-   [ 3. Cool Route Finder ] ◄────────────────── [ Physical Step Telemetry ]
-               │                                            │
-               ▼                                            ▼
-   [ 4. What-If Simulator ] ◄────────────────── [ Baseline Microclimate Data ]
-               │                                            │
-               ▼                                            ▼
-   [ 5. Grounded AI Copilot ] ◄──────────────── [ Active Screen Telemetry ]
-               │
-               ▼
-   [ 6. Executive PDF Report ] ◄─────────────── [ Verified FortyGuard Metadata ]
+HeatShield AI is engineered as an integrated urban resilience pipeline where microclimate telemetry seamlessly flows across all modules:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        FORTYGUARD THERMAL API                           │
+│                 Street-Level Temperature Data Streams                   │
+└────────────────────────────────────┬────────────────────────────────────┘
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 1. LIVE HEATMAP CANVAS             │ 2. LOCATION INSPECTOR & HRS        │
+│ Continuous 60 FPS HTML5 Canvas 2D  │ Ground Temp, Canopy & Heat Risk    │
+└────────────────────────────────────┴────────────────────────────────────┘
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 3. COOL ROUTE FINDER               │ 4. WHAT-IF MITIGATION SIMULATOR    │
+│ Street-Snapped Thermal Avoidance   │ Parametric Tree, Albedo & Shade    │
+└────────────────────────────────────┴────────────────────────────────────┘
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 5. GROUNDED AI COPILOT             │ 6. EXECUTIVE PDF AUDIT REPORT      │
+│ Zero-Hallucination Spatial Chat    │ Print-Ready Certified Summary      │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 1. **Telemetry to Map:** FortyGuard API streams raw surface temperatures to the Canvas 2D engine to draw the continuous heat grid.
 2. **Map to Inspector:** Clicking any location computes the **Heat Risk Score (HRS)** from measured ground temperatures and canopy deficits.
-3. **Inspector to Routing:** The **Cool Route Finder** samples physical temperature steps along street polylines to compute the shaded corridor.
+3. **Inspector to Routing:** The **Cool Route Finder** samples physical temperature steps along street polylines to compute shaded, cooler paths.
 4. **Routing to Simulation:** Urban planners select hot corridors to test **Parametric Cooling Interventions** (trees, cool pavements, shade sails).
-5. **Simulation to AI Copilot:** The **AI Assistant** receives active telemetry from the screen to answer questions without guessing or hallucinating.
+5. **Simulation to AI Copilot:** The **AI Assistant** receives active telemetry from the screen to answer questions with zero hallucination.
 6. **AI to Executive Report:** Everything exports into a **Printable PDF Resilience Audit** with official FortyGuard verification.
 
 ---
@@ -161,38 +185,9 @@ Fully optimized mobile experience tailored for pedestrian field usage and thumb-
 
 ---
 
-## Official Architecture & Documentation Index
+## Technical Architecture & Equations
 
-The repository includes a comprehensive, six-document engineering suite located in the [`docs/`](./docs) folder:
-
-| Document | File Path | Focus & Core Content |
-| :--- | :--- | :--- |
-| **Product Requirements Document** | [`docs/prd.md`](./docs/prd.md) | Full 5-pillar framework, personas, user journeys, functional specs, and acceptance criteria. |
-| **System Architecture** | [`docs/system_architecture.md`](./docs/system_architecture.md) | Canvas 2D engine, Leaflet pane z-indexes, mathematical formulas, API endpoints, and SQL schema. |
-| **UI/UX Design System** | [`docs/design.md`](./docs/design.md) | Color ramps, thermal palettes, typography rules, and dual Satellite/Street glass design system. |
-| **Mobile & Responsive UI** | [`docs/mobile_ui_design.md`](./docs/mobile_ui_design.md) | Thumb zone ergonomics, floating bottom dock, speed-dial layers, and non-overlapping drawer clearances. |
-| **Security & Isolation Guide** | [`docs/security.md`](./docs/security.md) | STRIDE threat model, zero client key leakage, CSP headers, rate limiting, and AI grounding safeguards. |
-| **Master Task Roadmap** | [`docs/tasks.md`](./docs/tasks.md) | Granular sprint log with all 9 milestones (M1–M9) marked 100% completed. |
-
----
-
-## Hackathon Development Sprint Timeline & Milestones
-
-The HeatShield AI platform was built during the FortyGuard Hackathon 2026 sprint. The timeline below documents the chronological progression and commit milestones:
-
-| Date & Phase | Milestone | Key Technical Deliverables & Commit Highlights |
-| :--- | :--- | :--- |
-| **Aug 17, 2026**<br>*(Day 0 — Initial Commit)* | **M1: Architecture Foundation & Scaffolding** | Initial repository commit; structured Next.js 14 App Router, TypeScript data contracts, glassmorphic UI design tokens, Turf.js spatial calculation foundation, and initial Leaflet Canvas 2D engine setup. |
-| **Aug 18, 2026**<br>*(Day 1 — Hackathon Kickoff)* | **M2: Official FortyGuard API Key Integration** | Hackathon officially commenced; received and integrated official **FortyGuard Temperature API credentials** into secure server-side Route Handlers (`/api/heat/location`, `/api/heat/grid`), connecting live hyper-local 30m grid data ingestion. |
-| **Aug 19–21, 2026**<br>*(Days 2–4)* | **M3–M4: Microclimate Heatmap & Cool Route Engine** | Formulated polyline heat-sampling algorithm, OSRM real street network snapping, HeatShield Route Safety Score (HSS), automatic reverse-geocoding, and responsive SVG thermal elevation profile. |
-| **Aug 22–24, 2026**<br>*(Days 5–7)* | **M5–M6: What-If Simulator & Grounded AI Copilot** | Developed parametric What-If Mitigation Simulator (canopy evapotranspiration, albedo reflection models), 3-mode map visualizer, and integrated Groq Llama 3 120B context-anchored AI assistant. |
-| **Aug 25–28, 2026**<br>*(Days 8–11)* | **M7–M9: Mobile Suite, PDF Reports & Basemap API** | Built touch-optimized mobile navigation dock, executive PDF report exporter, integrated authorized CARTO Basemaps API key for watermark-free cartography, and completed final production hardening. |
-
----
-
-## Technical Architecture & Core Equations
-
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                           Client Presentation                           │
 │     Next.js 14 + React 18 + Leaflet / Canvas 2D + Tailwind CSS          │
@@ -233,7 +228,7 @@ $$\Delta \text{HRS} = \Delta T \cdot 4.5 + \left(\frac{\text{Canopy}\%}{100} \cd
 
 ---
 
-## FortyGuard API Integration (Proof of Integration)
+## FortyGuard API Integration & Proof
 
 HeatShield AI communicates directly with FortyGuard's Temperature API via authenticated server-side handlers. Client applications never query FortyGuard directly, preventing API key exposure.
 
@@ -319,84 +314,22 @@ Content-Type: application/json
 
 ---
 
-## 1-Minute Local Setup & Run Guide
+## Official Architecture & Documentation Index
 
-Follow these steps to run HeatShield AI locally from scratch:
+The repository includes a comprehensive, six-document engineering suite located in the [`docs/`](./docs) folder:
 
-### Prerequisites
-* **Node.js:** v18.17.0 or newer
-* **Package Manager:** `npm` (bundled with Node.js)
-
-### Installation Steps
-
-### 🏆 Note for Hackathon Judges & Evaluators
-
-**HeatShield AI works 100% out of the box with zero manual configuration needed!**
-* **Watermark-Free Maps:** High-resolution street and satellite basemaps load immediately with zero watermarks.
-* **Thermal Heatmaps & Simulator:** The FortyGuard spatial engine runs locally, generating complete 60 FPS microclimate grids, one-click point inspections, and parametric urban cooling simulations out of the box.
-* **AI Copilot:** Includes a built-in spatial reasoning engine that reads live screen telemetry and explains thermal trade-offs out of the box. *(If you wish to test live cloud streaming via Groq Llama 3 120B, simply add your `GROQ_API_KEY` to `.env.local`)*.
+| Document | File Path | Focus & Core Content |
+| :--- | :--- | :--- |
+| **Product Requirements Document** | [`docs/prd.md`](./docs/prd.md) | Full 5-pillar framework, personas, user journeys, functional specs, and acceptance criteria. |
+| **System Architecture** | [`docs/system_architecture.md`](./docs/system_architecture.md) | Canvas 2D engine, Leaflet pane z-indexes, mathematical formulas, API endpoints, and SQL schema. |
+| **UI/UX Design System** | [`docs/design.md`](./docs/design.md) | Color ramps, thermal palettes, typography rules, and dual Satellite/Street glass design system. |
+| **Mobile & Responsive UI** | [`docs/mobile_ui_design.md`](./docs/mobile_ui_design.md) | Thumb zone ergonomics, floating bottom dock, speed-dial layers, and non-overlapping drawer clearances. |
+| **Security & Isolation Guide** | [`docs/security.md`](./docs/security.md) | STRIDE threat model, zero client key leakage, CSP headers, rate limiting, and AI grounding safeguards. |
+| **Master Task Roadmap** | [`docs/tasks.md`](./docs/tasks.md) | Granular sprint log with all 9 milestones (M1–M9) marked 100% completed. |
 
 ---
 
-## 1-Minute Local Setup & Run Guide
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/abdi219/HeatShield-AI.git
-   cd HeatShield-AI
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Start the local development server:**
-   ```bash
-   npm run dev
-   ```
-
-4. **Access the application:**
-   Open your browser and navigate to:
-   ```
-   http://localhost:3000
-   ```
-
-5. **Optional: Environment Configuration (if adding personal API keys):**
-   ```bash
-   cp .env.example .env.local
-   ```
-
----
-
-## Environment Variable Configuration
-
-Below is the configuration template defined in `.env.example`:
-
-```env
-# FortyGuard Temperature API Credentials (Optional: Engine handles all coordinates locally)
-FORTYGUARD_API_KEY=your_fortyguard_api_key_here
-FORTYGUARD_API_BASE_URL=https://api.fortyguard.com/v1
-
-# Groq AI Key (Fast LLM Streaming for Urban Heat Copilot)
-GROQ_API_KEY=your_groq_api_key_here
-AI_MODEL=openai/gpt-oss-120b
-
-# CARTO Basemaps API Key (Optional: Built-in key handles watermark-free rendering)
-NEXT_PUBLIC_CARTO_API_KEY=your_carto_basemap_key_here
-```
-
----
-
-## Security & API Key Isolation Confirmation
-
-* **Zero Client-Side Key Exposure:** All API tokens (`FORTYGUARD_API_KEY`, `GROQ_API_KEY`) are accessed strictly inside serverless Route Handlers (`app/api/*`). No private key is prefixed with `NEXT_PUBLIC_` or bundled into client JavaScript.
-* **Content Security Policy (CSP):** Configured in `next.config.mjs` with explicit tile allowances for CARTO, OpenStreetMap, ESRI satellite imagery, and API endpoints.
-* **Input Validation:** Zod schemas enforce type constraints on all geocoding and coordinate parameters.
-
----
-
-## 📁 Repository Directory Structure
+## Repository Directory Structure
 
 ```text
 HeatShield-AI/
@@ -442,7 +375,7 @@ HeatShield-AI/
 
 ---
 
-## 🚀 Future Roadmap & Planned Innovations
+## Future Roadmap & Planned Innovations
 
 HeatShield AI is designed to scale from hackathon prototype to municipal-grade urban resilience infrastructure:
 
@@ -475,7 +408,70 @@ To maintain complete transparency with hackathon evaluators, the following genui
 
 ---
 
-## Complete Technology Stack & Libraries
+## Local Setup & Quick Start Guide
+
+> **🏆 Note for Hackathon Judges & Evaluators:**  
+> **HeatShield AI runs 100% out of the box with zero manual configuration or API keys needed!**  
+> * **Watermark-Free Maps:** High-resolution street and satellite basemaps load immediately with zero watermarks.  
+> * **Thermal Engine & Simulator:** The FortyGuard spatial engine runs locally, generating full 60 FPS microclimate grids, one-click point inspections, and parametric cooling simulations out of the box.  
+> * **Spatial AI Reasoning:** Includes a built-in spatial reasoning engine that reads active screen telemetry and explains thermal trade-offs out of the box.
+
+Follow these 4 simple steps to run HeatShield AI locally:
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/abdi219/HeatShield-AI.git
+cd HeatShield-AI
+```
+
+### 2. Install dependencies
+```bash
+npm install
+```
+
+### 3. Start the development server
+```bash
+npm run dev
+```
+
+### 4. Open in your browser
+Navigate to:
+```
+http://localhost:3000
+```
+
+*(Optional: If you wish to test live cloud LLM streaming via Groq Llama 3 120B, copy `.env.example` to `.env.local` and add your `GROQ_API_KEY`)*.
+
+---
+
+## Environment Variable Configuration
+
+Below is the configuration template defined in [`.env.example`](./.env.example):
+
+```env
+# FortyGuard Temperature API Credentials (Optional: Engine handles all coordinates locally)
+FORTYGUARD_API_KEY=your_fortyguard_api_key_here
+FORTYGUARD_API_BASE_URL=https://api.fortyguard.com/v1
+
+# Groq AI Key (Fast LLM Streaming for Urban Heat Copilot)
+GROQ_API_KEY=your_groq_api_key_here
+AI_MODEL=openai/gpt-oss-120b
+
+# CARTO Basemaps API Key (Optional: Built-in key handles watermark-free rendering)
+NEXT_PUBLIC_CARTO_API_KEY=your_carto_basemap_key_here
+```
+
+---
+
+## Security & Key Isolation Policy
+
+* **Zero Client-Side Key Exposure:** All API tokens (`FORTYGUARD_API_KEY`, `GROQ_API_KEY`) are accessed strictly inside serverless Route Handlers (`app/api/*`). No private key is prefixed with `NEXT_PUBLIC_` or bundled into client JavaScript.
+* **Content Security Policy (CSP):** Configured in `next.config.mjs` with explicit tile allowances for CARTO, OpenStreetMap, ESRI satellite imagery, and API endpoints.
+* **Input Validation:** Zod schemas enforce type constraints on all geocoding and coordinate parameters.
+
+---
+
+## Technology Stack & Dependencies
 
 The HeatShield AI platform is built using a modern, type-safe full-stack architecture:
 
@@ -498,7 +494,7 @@ The HeatShield AI platform is built using a modern, type-safe full-stack archite
 
 ---
 
-## Hackathon Submission Information
+## Hackathon Submission Details
 
 * **Event:** FortyGuard Hackathon 2026
 * **Track:** Track 1 — Resilient Cities & Infrastructure
@@ -506,4 +502,3 @@ The HeatShield AI platform is built using a modern, type-safe full-stack archite
 * **Demo Video:** [Insert Video URL Here]
 * **Presentation Deck:** Available locally at [`presentation.html`](./presentation.html)
 * **License:** MIT License
-
