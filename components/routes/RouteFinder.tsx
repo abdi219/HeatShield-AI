@@ -251,6 +251,11 @@ export function RouteFinder() {
   // Travel Mode Selection (Walk / Cycle / Drive)
   const handleModeChange = (mode: "walking" | "cycling" | "driving") => {
     setTravelMode(mode);
+    const origQuery = (originText || origin?.name || "").trim();
+    const destQuery = (destText || destination?.name || "").trim();
+    if (origQuery && destQuery) {
+      handleCalculateRoutes(mode);
+    }
   };
 
   // Apply City Corridor Preset

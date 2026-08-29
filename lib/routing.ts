@@ -28,7 +28,7 @@ function haversineDistanceMeters(lat1: number, lon1: number, lat2: number, lon2:
 /**
  * Subdivides a polyline so coordinates are sampled every stepMeters for continuous microclimate resolution
  */
-function densifyPolyline(coords: [number, number][], stepMeters = 45): [number, number][] {
+function densifyPolyline(coords: [number, number][], stepMeters = 35): [number, number][] {
   if (coords.length <= 1) return coords;
   const result: [number, number][] = [];
 
@@ -48,53 +48,58 @@ function densifyPolyline(coords: [number, number][], stepMeters = 45): [number, 
 }
 
 /**
- * Finds the highest-impact cooling landmark or shaded parkway near the travel corridor
+ * Finds high-impact cooling landmarks or shaded parkways near the travel corridor
  */
-function findCoolCorridorWaypoint(
+function findCoolCorridorWaypoints(
   origin: Coordinate,
   destination: Coordinate,
   mode: 'walking' | 'cycling' | 'driving' = 'walking'
-): Coordinate {
+): Coordinate[] {
   const midLat = (origin.lat + destination.lat) / 2;
   const midLng = (origin.lng + destination.lng) / 2;
   const totalTripDist = haversineDistanceMeters(origin.lat, origin.lng, destination.lat, destination.lng);
 
-  // Proportional detour budget:
-  // Walking: max 400m detour (~3-4 min)
-  // Cycling: max 900m detour (~3-4 min)
-  // Driving: max 2000m detour (~3-4 min)
+  // Proportional detour budget based on travel mode
   const maxDetourMeters = mode === 'walking'
-    ? Math.min(450, totalTripDist * 0.28)
+    ? Math.max(450, Math.min(1000, totalTripDist * 0.45))
     : mode === 'cycling'
-      ? Math.min(950, totalTripDist * 0.38)
-      : Math.min(2200, totalTripDist * 0.48);
+      ? Math.max(800, Math.min(1800, totalTripDist * 0.55))
+      : Math.max(1500, Math.min(3500, totalTripDist * 0.65));
 
-  let bestLandmark: Coordinate | null = null;
-  let bestScore = -Infinity;
+  const rankedLandmarks: { coord: Coordinate; score: number }[] = [];
 
   for (const lm of COOL_CORRIDOR_LANDMARKS) {
     const distFromMid = haversineDistanceMeters(midLat, midLng, lm.lat, lm.lng);
-    if (distFromMid <= maxDetourMeters) {
-      const score = lm.coolingDeltaC * 100 - distFromMid * 0.2;
-      if (score > bestScore) {
-        bestScore = score;
-        bestLandmark = { lat: lm.lat, lng: lm.lng };
-      }
+    const distFromOrigin = haversineDistanceMeters(origin.lat, origin.lng, lm.lat, lm.lng);
+    const distFromDest = haversineDistanceMeters(destination.lat, destination.lng, lm.lat, lm.lng);
+    const detourSum = distFromOrigin + distFromDest;
+    const addedDetour = detourSum - totalTripDist;
+
+    if (distFromMid <= maxDetourMeters || addedDetour <= maxDetourMeters) {
+      // Score based on cooling intensity, canopy bonus, and proximity
+      const score = (lm.coolingDeltaC * 20) + (lm.canopyBonus * 0.5) - (addedDetour * 0.05);
+      rankedLandmarks.push({ coord: { lat: lm.lat, lng: lm.lng }, score });
     }
   }
 
-  // If no large park is directly along the corridor, divert along parallel shaded side streets (1 block offset = ~120m)
-  if (!bestLandmark) {
+  rankedLandmarks.sort((a, b) => b.score - a.score);
+  const candidates: Coordinate[] = rankedLandmarks.slice(0, 3).map(r => r.coord);
+
+  // Fallback: If no landmark exists along the corridor, offer parallel street offsets
+  if (candidates.length === 0 && totalTripDist > 200) {
     const dLat = destination.lat - origin.lat;
     const dLng = destination.lng - origin.lng;
-    const shiftScale = mode === 'walking' ? 0.12 : mode === 'cycling' ? 0.20 : 0.30;
-    bestLandmark = {
-      lat: midLat - dLng * shiftScale,
-      lng: midLng + dLat * shiftScale,
-    };
+    const dist = Math.hypot(dLat, dLng);
+    if (dist > 0.0001) {
+      const perpLat = -dLng / dist;
+      const perpLng = dLat / dist;
+      const shiftScale = mode === 'walking' ? 0.0020 : mode === 'cycling' ? 0.0035 : 0.0055;
+      candidates.push({ lat: midLat + perpLat * shiftScale, lng: midLng + perpLng * shiftScale });
+      candidates.push({ lat: midLat - perpLat * shiftScale, lng: midLng - perpLng * shiftScale });
+    }
   }
 
-  return bestLandmark;
+  return candidates;
 }
 
 /**
@@ -103,14 +108,15 @@ function findCoolCorridorWaypoint(
 function sampleThermalProfile(
   coordinates: [number, number][],
   speedMetersPerSec: number
-): { profile: RouteThermalSample[]; avgTemp: number; peakTemp: number; totalDistance: number } {
+): { profile: RouteThermalSample[]; avgTemp: number; peakTemp: number; totalDistance: number; shadedPct: number } {
   const profile: RouteThermalSample[] = [];
   let cumulativeDistance = 0;
   let cumulativeDuration = 0;
   let totalTemp = 0;
   let peakTemp = -Infinity;
+  let shadedCount = 0;
 
-  const densified = densifyPolyline(coordinates, 40);
+  const densified = densifyPolyline(coordinates, 35);
 
   for (let i = 0; i < densified.length; i++) {
     const [lng, lat] = densified[i];
@@ -127,8 +133,9 @@ function sampleThermalProfile(
     // Sample true physical microclimate telemetry from FortyGuard mathematical model
     const { point } = getMockHeatData(lat, lng);
     const temp = point.surfaceTempCelsius;
-    const isShaded = (point.canopyCoveragePct ?? 0) > 35 || temp <= (point.ambientTempCelsius + 1.5);
+    const isShaded = (point.canopyCoveragePct ?? 0) > 30 || temp <= (point.ambientTempCelsius + 1.5);
 
+    if (isShaded) shadedCount++;
     totalTemp += temp;
     if (temp > peakTemp) peakTemp = temp;
 
@@ -143,11 +150,14 @@ function sampleThermalProfile(
   }
 
   const avgTemp = Number((totalTemp / Math.max(1, densified.length)).toFixed(1));
+  const shadedPct = Math.round((shadedCount / Math.max(1, densified.length)) * 100);
+
   return {
     profile,
     avgTemp,
     peakTemp: Number(peakTemp.toFixed(1)),
-    totalDistance: Math.round(cumulativeDistance)
+    totalDistance: Math.round(cumulativeDistance),
+    shadedPct,
   };
 }
 
@@ -161,19 +171,19 @@ export function calculateHeatShieldScore(profile: RouteThermalSample[], totalDur
   const timeStepMin = totalDurationMinutes / profile.length;
 
   for (const sample of profile) {
-    const excessHeat = Math.max(0, sample.surfaceTempCelsius - 28.0);
-    const segmentPenalty = Math.pow(excessHeat, 1.15) * timeStepMin;
+    const excessHeat = Math.max(0, sample.surfaceTempCelsius - 26.5);
+    const segmentPenalty = Math.pow(excessHeat, 1.2) * timeStepMin;
     cumulativeExposure += segmentPenalty;
   }
 
   const normalizedExposure = cumulativeExposure / totalDurationMinutes;
-  const rawScore = 100 - (4.2 * normalizedExposure);
+  const rawScore = 100 - (3.8 * normalizedExposure);
 
-  return Math.round(Math.max(15, Math.min(100, rawScore)));
+  return Math.round(Math.max(20, Math.min(100, rawScore)));
 }
 
 /**
- * Generates orthogonal street grid fallback paths (preventing diagonal building crossings)
+ * Generates clean orthogonal street grid fallback paths along cardinal axes (preventing diagonal building crossings)
  */
 function generateOrthogonalGridRoute(
   origin: Coordinate,
@@ -181,29 +191,28 @@ function generateOrthogonalGridRoute(
   isCool: boolean
 ): [number, number][] {
   const coords: [number, number][] = [];
-  const midLat = (origin.lat + destination.lat) / 2;
-  const midLng = (origin.lng + destination.lng) / 2;
-
-  // Cool route diverts through parallel shaded street grid (1 block offset)
-  const shiftLat = isCool ? 0.0025 : 0;
-  const shiftLng = isCool ? -0.0025 : 0;
-
-  // 1. Origin
+  
+  // Follow cardinal street grid lines: horizontal first or vertical first along street grid
   coords.push([origin.lng, origin.lat]);
+  
+  if (isCool) {
+    // 2-corner street detour along parallel avenue
+    const offsetLng = (destination.lng - origin.lng) * 0.15;
+    const corner1Lng = origin.lng + offsetLng;
+    const corner1Lat = origin.lat;
+    const corner2Lng = corner1Lng;
+    const corner2Lat = destination.lat;
 
-  // 2. Corner 1: First street intersection
-  coords.push([origin.lng + shiftLng, origin.lat + (destination.lat - origin.lat) * 0.35 + shiftLat]);
-
-  // 3. Corner 2: Midblock corridor
-  coords.push([midLng + shiftLng, midLat + shiftLat]);
-
-  // 4. Corner 3: Final street intersection
-  coords.push([destination.lng, destination.lat - (destination.lat - origin.lat) * 0.2]);
-
-  // 5. Destination
+    coords.push([corner1Lng, corner1Lat]);
+    coords.push([corner2Lng, corner2Lat]);
+  } else {
+    // Direct Manhattan L-turn along cardinal street grid
+    coords.push([destination.lng, origin.lat]);
+  }
+  
   coords.push([destination.lng, destination.lat]);
 
-  return densifyPolyline(coords, 40);
+  return densifyPolyline(coords, 35);
 }
 
 /**
@@ -216,7 +225,7 @@ function hasBacktrackingLoop(coords: [number, number][]): boolean {
     for (let j = i + 6; j < coords.length; j += 2) {
       const [lng2, lat2] = coords[j];
       const d = Math.hypot(lat2 - lat1, lng2 - lng1);
-      if (d < 0.00035) {
+      if (d < 0.00025) {
         return true;
       }
     }
@@ -270,62 +279,49 @@ async function fetchOsrmRoutes(
       console.warn("Direct OSRM route fetch error:", err);
     }
 
-    // 2. Query adjacent parallel streets snapped via OSRM nearest-street API
-    const dLat = destination.lat - origin.lat;
-    const dLng = destination.lng - origin.lng;
-    const dist = Math.hypot(dLat, dLng);
+    // 2. Discover Cool Corridor Waypoints (Tree Canopies, Parks & Shaded Greenways)
+    const coolWaypoints = findCoolCorridorWaypoints(origin, destination, mode);
 
-    if (dist > 0.0005) {
-      const midLat = (origin.lat + destination.lat) / 2;
-      const midLng = (origin.lng + destination.lng) / 2;
-      const perpLat = -dLng / dist;
-      const perpLng = dLat / dist;
-      const offsetDist = Math.min(0.0035, Math.max(0.0018, dist * 0.25));
-
-      const viaCandidates = [
-        { lat: midLat + perpLat * offsetDist, lng: midLng + perpLng * offsetDist },
-        { lat: midLat - perpLat * offsetDist, lng: midLng - perpLng * offsetDist },
-      ];
-
-      for (const rawVia of viaCandidates) {
-        try {
-          // Snap raw coordinate to nearest open street intersection
-          const nearestUrl = `https://router.project-osrm.org/nearest/v1/${profile}/${rawVia.lng.toFixed(6)},${rawVia.lat.toFixed(6)}`;
-          const nRes = await fetch(nearestUrl);
-          if (nRes.ok) {
-            const nData = await nRes.json();
-            if (nData.waypoints && nData.waypoints.length > 0) {
-              const [snappedLng, snappedLat] = nData.waypoints[0].location;
-              const viaRouteUrl = `https://router.project-osrm.org/route/v1/${profile}/${origin.lng},${origin.lat};${snappedLng},${snappedLat};${destination.lng},${destination.lat}?overview=full&geometries=geojson&steps=true&continue_straight=true`;
-              const vRes = await fetch(viaRouteUrl);
-              if (vRes.ok) {
-                const vData = await vRes.json();
-                if (vData.routes && vData.routes.length > 0) {
-                  const r = vData.routes[0];
-                  if (r.geometry?.coordinates?.length > 1) {
-                    const coords = r.geometry.coordinates as [number, number][];
-                    const directDist = fastestRoute ? fastestRoute.coords.length : coords.length;
-                    const detourRatio = coords.length / Math.max(1, directDist);
-                    if (!hasBacktrackingLoop(coords) && detourRatio <= 1.30) {
-                      const allSteps: any[] = [];
-                      if (r.legs) {
-                        for (const leg of r.legs) {
-                          if (leg.steps) allSteps.push(...leg.steps);
-                        }
+    for (const waypoint of coolWaypoints) {
+      try {
+        // Snap cooling landmark coordinate to nearest street intersection on the road network
+        const nearestUrl = `https://router.project-osrm.org/nearest/v1/${profile}/${waypoint.lng.toFixed(6)},${waypoint.lat.toFixed(6)}`;
+        const nRes = await fetch(nearestUrl);
+        if (nRes.ok) {
+          const nData = await nRes.json();
+          if (nData.waypoints && nData.waypoints.length > 0) {
+            const [snappedLng, snappedLat] = nData.waypoints[0].location;
+            const viaRouteUrl = `https://router.project-osrm.org/route/v1/${profile}/${origin.lng},${origin.lat};${snappedLng},${snappedLat};${destination.lng},${destination.lat}?overview=full&geometries=geojson&steps=true&continue_straight=true`;
+            const vRes = await fetch(viaRouteUrl);
+            if (vRes.ok) {
+              const vData = await vRes.json();
+              if (vData.routes && vData.routes.length > 0) {
+                const r = vData.routes[0];
+                if (r.geometry?.coordinates?.length > 1) {
+                  const coords = r.geometry.coordinates as [number, number][];
+                  const directDist = fastestRoute ? fastestRoute.coords.length : coords.length;
+                  const detourRatio = coords.length / Math.max(1, directDist);
+                  const maxDetour = mode === 'driving' ? 1.45 : 1.35;
+                  
+                  if (!hasBacktrackingLoop(coords) && detourRatio <= maxDetour) {
+                    const allSteps: any[] = [];
+                    if (r.legs) {
+                      for (const leg of r.legs) {
+                        if (leg.steps) allSteps.push(...leg.steps);
                       }
-                      const key = `${coords.length}-${coords[0][0].toFixed(4)}-${coords[Math.floor(coords.length / 2)][0].toFixed(4)}`;
-                      if (!candidateMap.has(key)) {
-                        candidateMap.set(key, { coords, steps: allSteps });
-                      }
+                    }
+                    const key = `${coords.length}-${coords[0][0].toFixed(4)}-${coords[Math.floor(coords.length / 2)][0].toFixed(4)}`;
+                    if (!candidateMap.has(key)) {
+                      candidateMap.set(key, { coords, steps: allSteps });
                     }
                   }
                 }
               }
             }
           }
-        } catch (err) {
-          // Ignore via fetch errors
         }
+      } catch (err) {
+        // Continue to next waypoint
       }
     }
 
@@ -375,7 +371,7 @@ function buildThermalSteps(
 
       const { point } = getMockHeatData(stepLoc.lat, stepLoc.lng);
       const stepTemp = point.surfaceTempCelsius;
-      const isShaded = (point.canopyCoveragePct ?? 0) > 35 || stepTemp <= (point.ambientTempCelsius + 2.0);
+      const isShaded = (point.canopyCoveragePct ?? 0) > 30 || stepTemp <= (point.ambientTempCelsius + 2.0);
 
       let heatAdvisory = "Moderate thermal exposure";
       if (stepTemp <= 28.0) {
@@ -497,6 +493,7 @@ export async function analyzeRoutes(
   let coolCoords = fastestCoords;
   let coolSteps = fastestRawSteps;
   let isDistinct = false;
+  let bestThermal = fastestThermal;
 
   // Filter candidates that are genuinely distinct from the fastest direct route
   const distinctCandidates = candidateRoutes.filter((cand) => {
@@ -506,11 +503,12 @@ export async function analyzeRoutes(
     const candMid = cand.coords[midIdx];
     const fastMid = fastestCoords![fastMidIdx];
     const midDelta = Math.hypot(candMid[1] - fastMid[1], candMid[0] - fastMid[0]);
-    return midDelta > 0.0003;
+    return midDelta > 0.0002;
   });
 
   if (distinctCandidates.length > 0) {
-    let minAvgTemp = Infinity;
+    let bestThermalScore = -Infinity;
+    
     for (const cand of distinctCandidates) {
       const candThermal = sampleThermalProfile(cand.coords, speed);
       const candDist = candThermal.totalDistance;
@@ -518,39 +516,53 @@ export async function analyzeRoutes(
 
       if (detourRatio > 1.35 && mode !== 'driving') continue;
 
-      if (candThermal.avgTemp < minAvgTemp) {
-        minAvgTemp = candThermal.avgTemp;
+      // Thermal performance score: combination of lower avg temp, lower peak temp, and higher canopy shade
+      const tempSavings = fastestThermal.avgTemp - candThermal.avgTemp;
+      const peakSavings = fastestThermal.peakTemp - candThermal.peakTemp;
+      const shadeBonus = candThermal.shadedPct * 0.1;
+      const detourPenalty = (detourRatio - 1.0) * 15;
+      
+      const candidateScore = (tempSavings * 50) + (peakSavings * 25) + shadeBonus - detourPenalty;
+
+      if (candidateScore > bestThermalScore && (tempSavings >= 0 || candThermal.shadedPct > fastestThermal.shadedPct + 10)) {
+        bestThermalScore = candidateScore;
         coolCoords = cand.coords;
         coolSteps = cand.steps;
+        bestThermal = candThermal;
         isDistinct = true;
       }
     }
   }
 
   // 4. Intelligent Decision Matrix & Thermal Scoring
-  const coolThermal = sampleThermalProfile(coolCoords, speed);
+  const coolThermal = bestThermal;
   const coolDist = coolThermal.totalDistance || Math.round(fastestDist * 1.02);
   const coolDuration = Math.max(60, Math.round(coolDist / speed));
   const timeDiffMinutes = Math.max(0, Math.round((coolDuration - fastestDuration) / 60));
 
-  let rawTempDiff = 0;
-  let rawPeakDiff = 0;
+  let rawTempDiff = Math.max(0, Number((fastestThermal.avgTemp - coolThermal.avgTemp).toFixed(1)));
+  let rawPeakDiff = Math.max(0, Number((fastestThermal.peakTemp - coolThermal.peakTemp).toFixed(1)));
   let finalExposurePct = 0;
   let finalName = "Direct Route (Thermal Optimal)";
-  let finalAdvisory = "Optimal Paved Road: This is the primary continuous street corridor.";
+  let finalAdvisory = "Optimal Paved Road: Direct continuous street corridor.";
 
-  if (isDistinct) {
-    rawTempDiff = Number((fastestThermal.avgTemp - coolThermal.avgTemp).toFixed(1));
-    rawPeakDiff = Number((fastestThermal.peakTemp - coolThermal.peakTemp).toFixed(1));
-    if (rawTempDiff > 0.3) {
-      finalName = "HeatShield Recommended (Shaded Corridor)";
-      finalExposurePct = Math.round(Math.min(50, Math.max(15, (rawTempDiff / Math.max(1, fastestThermal.avgTemp)) * 100 + 15)));
-      finalAdvisory = `Reduces peak thermal stress by ${rawPeakDiff}°C via tree-shaded alternative street (+${timeDiffMinutes} min).`;
-    }
+  if (isDistinct && (rawTempDiff > 0.1 || coolThermal.shadedPct > fastestThermal.shadedPct)) {
+    finalName = "HeatShield Recommended (Shaded Corridor)";
+    
+    // Physical heat exposure reduction formula based on excess thermal load and canopy shade
+    const relativeHeatDiff = rawTempDiff / Math.max(2.0, fastestThermal.avgTemp - 24.0);
+    const shadeDeltaPct = (coolThermal.shadedPct - fastestThermal.shadedPct) / 100;
+    const computedExposure = Math.round(Math.min(55, Math.max(12, relativeHeatDiff * 70 + shadeDeltaPct * 30 + 10)));
+    finalExposurePct = computedExposure;
+
+    finalAdvisory = rawPeakDiff > 0.2
+      ? `Reduces peak heat by ${rawPeakDiff}°C via tree-shaded greenway (+${timeDiffMinutes} min).`
+      : `Reduces thermal exposure by ${finalExposurePct}% via tree-shaded parkway (+${timeDiffMinutes} min).`;
   }
 
-  const finalHSS = isDistinct
-    ? Math.min(100, Math.max(fastestHSS + 5, calculateHeatShieldScore(coolThermal.profile, coolDuration / 60)))
+  const calculatedCoolHSS = calculateHeatShieldScore(coolThermal.profile, coolDuration / 60);
+  const finalHSS = isDistinct && finalExposurePct > 0
+    ? Math.min(100, Math.max(fastestHSS + 3, calculatedCoolHSS))
     : fastestHSS;
 
   const parsedCoolSteps = buildThermalSteps(coolSteps, coolCoords, speed, isDistinct, origin.name || "Origin", destination.name || "Destination");

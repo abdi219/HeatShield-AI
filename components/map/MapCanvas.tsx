@@ -518,7 +518,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       // Outer White Casing
       L.polyline(latlngs, {
         color: "#FFFFFF",
-        weight: !isCoolSelected ? 12 : 7,
+        weight: !isCoolSelected ? 8.5 : 6,
         opacity: 0.95,
         lineCap: "round",
         lineJoin: "round",
@@ -527,9 +527,9 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       // Inner Dashed Hot Coral Polyline
       const fastestLine = L.polyline(latlngs, {
         color: "#E87722",
-        weight: !isCoolSelected ? 7 : 4,
+        weight: !isCoolSelected ? 5.5 : 3.5,
         opacity: !isCoolSelected ? 1.0 : 0.7,
-        dashArray: "7, 7",
+        dashArray: "6, 6",
         lineCap: "round",
         lineJoin: "round",
       }).addTo(routeGroupRef.current);
@@ -549,7 +549,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       // Outer White Casing
       L.polyline(latlngs, {
         color: "#FFFFFF",
-        weight: isCoolSelected ? 13 : 7.5,
+        weight: isCoolSelected ? 9 : 6.5,
         opacity: 0.95,
         lineCap: "round",
         lineJoin: "round",
@@ -558,7 +558,7 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       // Inner Solid Sapphire Blue Polyline
       const coolLine = L.polyline(latlngs, {
         color: "#2B82C9",
-        weight: isCoolSelected ? 8 : 4.5,
+        weight: isCoolSelected ? 6 : 4,
         opacity: isCoolSelected ? 1.0 : 0.7,
         lineCap: "round",
         lineJoin: "round",

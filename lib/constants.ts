@@ -62,14 +62,14 @@ export function findMatchingPilotCity(lat: number, lng: number, placeName?: stri
 export const CITY_COMMUTE_CORRIDORS: Record<string, Array<{ name: string; origin: { name: string; lat: number; lng: number }; destination: { name: string; lat: number; lng: number } }>> = {
   Phoenix: [
     {
-      name: "Encanto to Hance Deck Park",
-      origin: { name: "Encanto Park Shaded Lagoon", lat: 33.4750, lng: -112.0780 },
-      destination: { name: "Margaret T. Hance Deck Park", lat: 33.4628, lng: -112.0738 },
+      name: "Encanto Lagoon to Heritage Square",
+      origin: { name: "Encanto Park Shaded Lagoon", lat: 33.4750, lng: -112.0850 },
+      destination: { name: "Heritage Square Cultural Hub", lat: 33.4496, lng: -112.0645 },
     },
     {
-      name: "Grand Ave to Heritage Square",
-      origin: { name: "Grand Avenue Arts District", lat: 33.4560, lng: -112.0880 },
-      destination: { name: "Heritage Square Cultural Hub", lat: 33.4496, lng: -112.0645 },
+      name: "State Capitol to Roosevelt Row",
+      origin: { name: "Arizona State Capitol", lat: 33.4480, lng: -112.0970 },
+      destination: { name: "Roosevelt Row Arts District", lat: 33.4585, lng: -112.0665 },
     },
   ],
   Austin: [
@@ -79,9 +79,9 @@ export const CITY_COMMUTE_CORRIDORS: Record<string, Array<{ name: string; origin
       destination: { name: "Historic 6th Street Corridor", lat: 30.2678, lng: -97.7410 },
     },
     {
-      name: "Clarksville to Rainey Street",
-      origin: { name: "Clarksville Historic Greenway", lat: 30.2760, lng: -97.7600 },
-      destination: { name: "Rainey Street Canopy District", lat: 30.2590, lng: -97.7380 },
+      name: "Zilker Springs to Downtown Hub",
+      origin: { name: "Zilker Botanical Gateway", lat: 30.2660, lng: -97.7720 },
+      destination: { name: "Downtown 2nd Street District", lat: 30.2650, lng: -97.7450 },
     },
   ],
   Miami: [
