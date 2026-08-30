@@ -61,7 +61,8 @@ The HeatShield AI platform was built during the FortyGuard Hackathon 2026 sprint
 | **Aug 18, 2026**<br>*(Day 1 — Hackathon Kickoff)* | **M2: Official FortyGuard API Key Integration** | Hackathon officially commenced; received and integrated official **FortyGuard Temperature API credentials** into secure server-side Route Handlers (`/api/heat/location`, `/api/heat/grid`), connecting live hyper-local 30m grid data ingestion. |
 | **Aug 19–21, 2026**<br>*(Days 2–4)* | **M3–M4: Microclimate Heatmap & Cool Route Engine** | Formulated polyline heat-sampling algorithm, OSRM real street network snapping, HeatShield Route Safety Score (HSS), automatic reverse-geocoding, and responsive SVG thermal elevation profile. |
 | **Aug 22–24, 2026**<br>*(Days 5–7)* | **M5–M6: What-If Simulator & Grounded AI Copilot** | Developed parametric What-If Mitigation Simulator (canopy evapotranspiration, albedo reflection models), 3-mode map visualizer, and integrated Groq Llama 3 120B context-anchored AI assistant. |
-| **Aug 25–28, 2026**<br>*(Days 8–11)* | **M7–M9: Mobile Suite, PDF Reports & Basemap API** | Built touch-optimized mobile navigation dock, executive PDF report exporter, integrated authorized CARTO Basemaps API key for watermark-free cartography, and completed final production hardening. |
+| **Aug 25–28, 2026**<br>*(Days 8–11)* | **M7–M9: Mobile Suite, PDF Reports & Basemap API** | Built touch-optimized mobile navigation dock, executive PDF report exporter, integrated authorized CARTO Basemaps API key for watermark-free cartography, and completed initial production hardening. |
+| **Aug 29–30, 2026**<br>*(Days 12–13)* | **M10: Reliability Hardening & API Cleanup** | Hardened server API route error handling and fallback resilience, implemented in-memory routing response caching to prevent rate limits, streamlined map layer rendering, and finalized documentation. |
 
 ---
 
