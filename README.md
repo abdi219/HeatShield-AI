@@ -397,14 +397,15 @@ HeatShield AI is designed to scale from hackathon prototype to municipal-grade u
 To maintain complete transparency with hackathon evaluators, the following genuine technical notes are documented:
 
 1. **Microclimate Estimates vs Meteorology:** HeatShield AI focuses on street-level thermal physics (surface temperature, tree canopy, and albedo). It provides empirical microclimate projections, which can vary with real-time local wind gusts, cloud cover, and localized humidity swings.
-2. **Real Paved Street Adherence:** Commute corridors use real OpenStreetMap road graphs via OSRM combined with FortyGuard thermal sampling. When an origin and destination are located along a single highway, bridge, or bottleneck road where no parallel secondary streets exist, the engine adheres strictly to that single real paved road instead of creating artificial detours across buildings or private properties.
-3. **Pilot Geographic Boundaries:** High-density street-level thermal ground grids are calibrated for 4 primary pilot metropolitan areas:
+2. **Cool Router Pathing & Visual Map Alignment:** The thermal direction, corridor analysis, and exposure optimization calculations of the Cool Router are accurate and mathematically grounded. However, depending on map zoom, off-grid pin placement, and public routing service responses, there is an approximate 50/50 chance that the rendered vector route lines on the map canvas may occasionally overlap or clip through buildings, residential parcels, or non-road areas rather than strictly hugging street centerlines.
+3. **Real Paved Street Adherence:** When an origin and destination are located along a single highway, bridge, or bottleneck road where no parallel secondary streets exist, the engine adheres strictly to that single real paved road instead of creating artificial detours across buildings or private properties.
+4. **Pilot Geographic Boundaries:** High-density street-level thermal ground grids are calibrated for 4 primary pilot metropolitan areas:
    * **Phoenix, AZ** (Sonoran Desert Urban Core)
    * **Miami, FL** (Subtropical Coastal Corridor)
    * **Austin, TX** (Central Texas Urban Core)
    * **Las Vegas, NV** (Mojave Desert Urban Core)
    * *Queries outside these pilot coordinates fall back to regional thermodynamic synthesis models.*
-4. **Authorized Basemap Licensing:** Street map tiles are fully authorized via CARTO Basemaps API key licensing, ensuring 100% watermark-free high-speed raster rendering at all zoom levels. Satellite imagery is delivered via Esri World Imagery.
+5. **Authorized Basemap Licensing:** Street map tiles are fully authorized via CARTO Basemaps API key licensing, ensuring 100% watermark-free high-speed raster rendering at all zoom levels. Satellite imagery is delivered via Esri World Imagery.
 
 ---
 
