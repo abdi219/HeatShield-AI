@@ -5,7 +5,7 @@
 **Target Event:** FortyGuard Hackathon 2026 — Track 1: Resilient Cities & Infrastructure  
 **Development Sprint:** 14-Day Rapid Iteration Cycle  
 **Framework:** Detect → Understand → Avoid → Reduce → Report  
-**Execution Status:** 100% Completed across all 9 Sprint Milestones
+**Execution Status:** 100% Completed across all 10 Sprint Milestones
 
 ---
 
@@ -20,8 +20,9 @@
 | **M5** | What-If Mitigation Simulator | Days 8–9 | Parametric sliders, empirical cooling equations, scenario bookmarking. [COMPLETED] |
 | **M6** | Grounded AI Heat Copilot | Days 10–11 | Groq Llama 3 120B streaming, spatial telemetry context injection. [COMPLETED] |
 | **M7** | Public Documentation & Persona Showcase | Days 11–12 | Interactive docs modal, persona journeys, FAQ, architecture guides. [COMPLETED] |
-| **M8** | Mobile Suite & Responsive Hardening | Days 13–14 | Floating bottom dock, speed-dial layers, non-overlapping clearances. [COMPLETED] |
-| **M9** | Executive Heat Reports & Final Polish | Polish | PDF export modals, real-time threshold heat alert, security audit. [COMPLETED] |
+| **M8** | Mobile Suite & Responsive Hardening | Days 11–12 | Floating bottom dock, speed-dial layers, non-overlapping clearances. [COMPLETED] |
+| **M9** | Executive Heat Reports & Final Polish | Days 11–12 | PDF export modals, real-time threshold heat alert, security audit. [COMPLETED] |
+| **M10** | Reliability Hardening & API Cleanup | Days 12–13 | Server route error resilience, in-memory route caching, layer rendering polish, and documentation. [COMPLETED] |
 
 ---
 
@@ -158,3 +159,19 @@ Legend:
 
 - [x] **TASK-9.3: Security, CSP & Build Audit** `[P1]` `[SEC]`
   - Configured strict CSP headers, verified zero client-side key leakage, and achieved clean TypeScript compilation.
+
+---
+
+### Milestone 10: Reliability Hardening & API Cleanup (Days 12–13)
+
+- [x] **TASK-10.1: Multi-Tier Routing Fallback & In-Memory Cache** `[P1]` `[BE/SP]`
+  - Added fast timeout handling and 30-minute server-side LRU cache for route calculations.
+  - Implemented multi-tier routing pipeline ensuring seamless route loads without rate limit locks.
+
+- [x] **TASK-10.2: Server API Route Error Handling & Resilience** `[P1]` `[BE]`
+  - Hardened `/api/routes/analyze`, `/api/heat/location`, and `/api/heat/grid` with structured Zod error parsing and graceful fallbacks.
+  - Added user-facing error notification banners for edge-case coordinates.
+
+- [x] **TASK-10.3: Map Layer Styling & Documentation Alignment** `[P2]` `[FE]`
+  - Bound polyline groups to dedicated Leaflet `routePane` (`zIndex: 650`) to render cleanly above thermal canvas rasters.
+  - Finalized Master Architecture Documentation, README sprint milestones, and limitations.
