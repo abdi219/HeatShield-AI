@@ -67,7 +67,7 @@ function calculateUrbanHeatDispersion(lat: number, lng: number): {
 
   // Active Diurnal Cycle (Preserves realistic day/night swing while maintaining daytime microclimate contrast)
   const isDaytime = localSolarHour >= 6.5 && localSolarHour <= 19.5;
-  const sunPeakFactor = isDaytime 
+  const sunPeakFactor = isDaytime
     ? Math.sin(((localSolarHour - 6.5) / 13.0) * Math.PI)
     : 0.0;
   const solarIrradiance = Math.max(0.35, Math.min(1.0, 0.35 + sunPeakFactor * 0.65));
@@ -277,14 +277,14 @@ export function getMockHeatGrid(
   neLng: number
 ): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature[] = [];
-  
+
   const midLat = (swLat + neLat) / 2;
   const cosLat = Math.cos((midLat * Math.PI) / 180);
-  
+
   // High-density 42x42 spatial grid for seamless city-wide coverage
   const latSteps = 42;
   const stepLat = (neLat - swLat) / latSteps;
-  
+
   const idealStepLng = stepLat / Math.max(0.15, cosLat);
   const lngSteps = Math.max(26, Math.round((neLng - swLng) / idealStepLng));
   const actualStepLng = (neLng - swLng) / lngSteps;
@@ -293,7 +293,7 @@ export function getMockHeatGrid(
     for (let j = 0; j <= lngSteps; j++) {
       const lat = swLat + i * stepLat;
       const lng = swLng + j * actualStepLng;
-      
+
       const { point, assessment } = getMockHeatData(lat, lng);
 
       features.push({
@@ -323,16 +323,19 @@ export function getMockHeatGrid(
 
 /**
  * FortyGuard Async Engine Polling Helper
+ * Polls GET /v1/status/{activityId} until job is Completed or Failed
  */
-async function pollFortyGuardJob(activityId: string, maxAttempts = 6): Promise<any | null> {
+async function pollFortyGuardJob(activityId: string, maxAttempts = 12): Promise<any | null> {
   const apiKey = process.env.FORTYGUARD_API_KEY || FORTYGUARD_API_KEY;
   if (!apiKey) return null;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 400 * Math.pow(1.5, attempt)));
+      // 1.5s to 2.5s progressive delay
+      const delayMs = Math.min(2500, 1200 + attempt * 250);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
 
-      const response = await fetch(`${FORTYGUARD_API_BASE_URL}/status?activity_id=${encodeURIComponent(activityId)}`, {
+      const response = await fetch(`${FORTYGUARD_API_BASE_URL}/status/${encodeURIComponent(activityId)}`, {
         method: "GET",
         headers: {
           "api-key": apiKey,
@@ -347,10 +350,16 @@ async function pollFortyGuardJob(activityId: string, maxAttempts = 6): Promise<a
       }
 
       const payload = await response.json();
-      if (payload.status === "Completed" || payload.state === "Completed" || payload.data || payload.features) {
-        return payload.data || payload;
+      const statusStr = payload.status || payload.message || payload.data?.status;
+
+      if (statusStr === "Completed" || payload.data?.result?.map_data) {
+        return payload.data?.result?.map_data || payload.data?.result || payload.data || payload;
       }
-      if (payload.status === "Failed" || payload.state === "Failed") return null;
+
+      if (statusStr === "Failed" || payload.error === true) {
+        console.warn("FortyGuard job failed on server:", payload);
+        return null;
+      }
     } catch (err) {
       console.warn(`FortyGuard polling attempt ${attempt + 1} warning:`, err);
     }
@@ -360,12 +369,19 @@ async function pollFortyGuardJob(activityId: string, maxAttempts = 6): Promise<a
 
 /**
  * Live Server-side FortyGuard Location Fetcher
+ * Submits a localized AOI to FortyGuard POST /v1/heatmap and returns real telemetry
  */
-export async function fetchFortyGuardLocation(lat: number, lng: number) {
+export async function fetchFortyGuardLocation(lat: number, lng: number): Promise<{
+  point: MicroclimatePoint;
+  assessment: HeatRiskAssessment;
+  activityId?: string;
+  source: 'fortyguard_live' | 'synthesized_model';
+}> {
   const apiKey = process.env.FORTYGUARD_API_KEY || FORTYGUARD_API_KEY;
 
   if (!apiKey) {
-    return getMockHeatData(lat, lng);
+    const mock = getMockHeatData(lat, lng);
+    return { ...mock, source: 'synthesized_model' };
   }
 
   const cacheKey = `loc-${lat.toFixed(4)}-${lng.toFixed(4)}`;
@@ -376,7 +392,7 @@ export async function fetchFortyGuardLocation(lat: number, lng: number) {
 
   try {
     const todayStr = new Date().toISOString().split("T")[0];
-    const delta = 0.0005;
+    const delta = 0.003; // ~300m localized bounding box
 
     const response = await fetch(`${FORTYGUARD_API_BASE_URL}/heatmap`, {
       method: "POST",
@@ -386,47 +402,64 @@ export async function fetchFortyGuardLocation(lat: number, lng: number) {
       },
       body: JSON.stringify({
         polygon_aoi: {
-          type: "Polygon",
-          coordinates: [[
-            [lng - delta, lat - delta],
-            [lng + delta, lat - delta],
-            [lng + delta, lat + delta],
-            [lng - delta, lat + delta],
-            [lng - delta, lat - delta],
-          ]],
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "Polygon",
+                coordinates: [[
+                  [lng - delta, lat - delta],
+                  [lng + delta, lat - delta],
+                  [lng + delta, lat + delta],
+                  [lng - delta, lat + delta],
+                  [lng - delta, lat - delta],
+                ]],
+              },
+            },
+          ],
         },
         date_time: {
           start_date: todayStr,
-          filter_type: 1,
+          filter_type: 3,
         },
+        granularity: 100,
       }),
     });
 
     if (response.ok) {
       const initData = await response.json();
-      let finalResult = initData;
+      const activityId = initData.data?.activity_id || initData.activity_id;
 
-      if (initData.activity_id) {
-        const polledData = await pollFortyGuardJob(initData.activity_id);
-        if (polledData) {
-          finalResult = polledData;
-        }
+      let mapData: any = null;
+      if (activityId) {
+        mapData = await pollFortyGuardJob(activityId);
       }
 
-      if (finalResult && (finalResult.temperature || finalResult.surface_temperature || finalResult.features)) {
-        const surfaceTemp = Number(
-          finalResult.surface_temperature ||
-          finalResult.surface_temp ||
-          finalResult.temperature ||
-          (finalResult.features?.[0]?.properties?.temperature) ||
-          34.5
-        );
-        const ambientTemp = Number(
-          finalResult.air_temperature ||
-          finalResult.ambient_temperature ||
-          30.5
-        );
-        const canopyPct = Number(finalResult.canopy_coverage || finalResult.canopy_pct || 22);
+      const features: any[] = mapData?.features || initData.features || [];
+      
+      if (features.length > 0) {
+        // Compute mean temperatures from real FortyGuard spatial tiles
+        let sumTemp = 0;
+        let sumAir = 0;
+        let count = 0;
+
+        for (const f of features) {
+          const p = f.properties || {};
+          const t = p.average_temperature || p.temperature || p.surface_temperature || p.mean_temperature;
+          const a = p.air_temperature || p.ambient_temperature;
+          if (typeof t === "number") {
+            sumTemp += t;
+            sumAir += typeof a === "number" ? a : t - 4.5;
+            count++;
+          }
+        }
+
+        const firstProp = features[0]?.properties || {};
+        const surfaceTemp = count > 0 ? Number((sumTemp / count).toFixed(1)) : Number(firstProp.average_temperature || 34.5);
+        const ambientTemp = count > 0 ? Number((sumAir / count).toFixed(1)) : Number(firstProp.air_temperature || surfaceTemp - 4.2);
+        const canopyPct = Number(firstProp.canopy_coverage || firstProp.canopy_pct || 24);
 
         const assessment = calculateHeatRiskScore({
           surfaceTempC: surfaceTemp,
@@ -447,7 +480,7 @@ export async function fetchFortyGuardLocation(lat: number, lng: number) {
           source: 'fortyguard_live',
         };
 
-        const output = { point, assessment };
+        const output = { point, assessment, activityId, source: 'fortyguard_live' as const };
         cache.set(cacheKey, { data: output, expiresAt: Date.now() + CACHE_TTL_MS });
         return output;
       }
@@ -456,11 +489,13 @@ export async function fetchFortyGuardLocation(lat: number, lng: number) {
     console.warn("Live FortyGuard location fetch fallback:", error);
   }
 
-  return getMockHeatData(lat, lng);
+  const mock = getMockHeatData(lat, lng);
+  return { ...mock, source: 'synthesized_model' };
 }
 
 /**
  * Live Server-side FortyGuard Heat Grid Fetcher
+ * Submits a bounding box to FortyGuard POST /v1/heatmap and returns normalized GeoJSON FeatureCollection
  */
 export async function fetchFortyGuardGrid(
   swLat: number,
@@ -491,36 +526,102 @@ export async function fetchFortyGuardGrid(
       },
       body: JSON.stringify({
         polygon_aoi: {
-          type: "Polygon",
-          coordinates: [[
-            [swLng, swLat],
-            [neLng, swLat],
-            [neLng, neLat],
-            [swLng, neLat],
-            [swLng, swLat],
-          ]],
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "Polygon",
+                coordinates: [[
+                  [swLng, swLat],
+                  [neLng, swLat],
+                  [neLng, neLat],
+                  [swLng, neLat],
+                  [swLng, swLat],
+                ]],
+              },
+            },
+          ],
         },
         date_time: {
           start_date: todayStr,
-          filter_type: 1,
+          filter_type: 3,
         },
+        granularity: 100,
       }),
     });
 
     if (response.ok) {
       const initData = await response.json();
-      let finalGrid = initData;
+      const activityId = initData.data?.activity_id || initData.activity_id;
 
-      if (initData.activity_id) {
-        const polledData = await pollFortyGuardJob(initData.activity_id);
-        if (polledData && (polledData.features || polledData.type === "FeatureCollection")) {
-          finalGrid = polledData;
-        }
+      let mapData: any = null;
+      if (activityId) {
+        mapData = await pollFortyGuardJob(activityId);
       }
 
-      if (finalGrid && finalGrid.type === "FeatureCollection" && finalGrid.features?.length > 0) {
-        cache.set(cacheKey, { data: finalGrid, expiresAt: Date.now() + CACHE_TTL_MS });
-        return finalGrid;
+      const rawFeatures: any[] = mapData?.features || initData.features || [];
+
+      if (rawFeatures.length > 0) {
+        const features: GeoJSON.Feature[] = rawFeatures.map((rf: any, index: number) => {
+          const prop = rf.properties || {};
+          const geom = rf.geometry || {};
+          
+          let coordinates = [0, 0];
+          if (geom.type === "Point" && Array.isArray(geom.coordinates)) {
+            coordinates = geom.coordinates;
+          } else if (geom.type === "Polygon" && Array.isArray(geom.coordinates?.[0])) {
+            // Find centroid of polygon tile
+            const ring = geom.coordinates[0];
+            let cLng = 0, cLat = 0;
+            for (const pt of ring) {
+              cLng += pt[0];
+              cLat += pt[1];
+            }
+            coordinates = [cLng / ring.length, cLat / ring.length];
+          }
+
+          const surfaceTemp = Number(
+            prop.average_temperature ||
+            prop.temperature ||
+            prop.surface_temperature ||
+            34.0
+          );
+          const ambientTemp = Number(prop.air_temperature || surfaceTemp - 4.5);
+          const canopyPct = Number(prop.canopy_coverage || 22);
+
+          const assessment = calculateHeatRiskScore({
+            surfaceTempC: surfaceTemp,
+            ambientTempC: ambientTemp,
+            canopyCoveragePct: canopyPct,
+          });
+
+          return {
+            type: "Feature",
+            geometry: {
+              type: "Point",
+              coordinates,
+            },
+            properties: {
+              id: `fg-live-${index}`,
+              surfaceTemp,
+              ambientTemp,
+              hrsScore: assessment.score,
+              hrsLevel: assessment.level,
+              canopyPct,
+              source: "fortyguard_live",
+            },
+          };
+        });
+
+        const collection: GeoJSON.FeatureCollection = {
+          type: "FeatureCollection",
+          features,
+        };
+
+        cache.set(cacheKey, { data: collection, expiresAt: Date.now() + CACHE_TTL_MS });
+        return collection;
       }
     }
   } catch (error) {
@@ -545,5 +646,5 @@ export async function fetchFortyGuardData(options?: {
   if (options?.lat !== undefined && options?.lng !== undefined) {
     return fetchFortyGuardLocation(options.lat, options.lng);
   }
-  return getMockHeatData(33.4484, -112.0740);
+  return fetchFortyGuardLocation(33.4484, -112.0740);
 }

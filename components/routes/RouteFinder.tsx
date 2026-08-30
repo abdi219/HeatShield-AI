@@ -378,8 +378,8 @@ export function RouteFinder() {
               type="button"
               onClick={handleClearRoute}
               className={`px-2 py-0.5 rounded-lg text-[11px] font-bold flex items-center gap-1 border transition-all ${isSatellite
-                  ? "bg-white/20 hover:bg-white/30 text-white border-white/40"
-                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                ? "bg-white/20 hover:bg-white/30 text-white border-white/40"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
                 }`}
               title="Clear active route & reset map"
             >
@@ -466,8 +466,8 @@ export function RouteFinder() {
               onChange={(e) => setOriginText(e.target.value)}
               placeholder="Enter starting point (or click pin)..."
               className={`w-full h-9 pl-8 pr-16 rounded-xl text-xs font-semibold focus:outline-none transition-all ${isSatellite
-                  ? "bg-white/15 border border-white/35 text-white placeholder:text-white/70 focus:bg-white/25 focus:border-white/60"
-                  : "bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-400"
+                ? "bg-white/15 border border-white/35 text-white placeholder:text-white/70 focus:bg-white/25 focus:border-white/60"
+                : "bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-400"
                 }`}
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -478,8 +478,8 @@ export function RouteFinder() {
                   setPointPickingMode(pointPickingMode === "origin" ? null : "origin");
                 }}
                 className={`p-1.5 rounded-lg text-xs font-bold transition-all ${pointPickingMode === "origin"
-                    ? "bg-amber-400 text-slate-950 shadow-md ring-2 ring-amber-300"
-                    : isSatellite ? "text-white/80 hover:text-white hover:bg-white/20" : "text-slate-400 hover:text-slate-800 hover:bg-slate-200"
+                  ? "bg-amber-400 text-slate-950 shadow-md ring-2 ring-amber-300"
+                  : isSatellite ? "text-white/80 hover:text-white hover:bg-white/20" : "text-slate-400 hover:text-slate-800 hover:bg-slate-200"
                   }`}
                 title="Click on map to set Origin (A)"
               >
@@ -508,8 +508,8 @@ export function RouteFinder() {
               onChange={(e) => setDestText(e.target.value)}
               placeholder="Enter destination (or click pin)..."
               className={`w-full h-9 pl-8 pr-16 rounded-xl text-xs font-semibold focus:outline-none transition-all ${isSatellite
-                  ? "bg-white/15 border border-white/35 text-white placeholder:text-white/70 focus:bg-white/25 focus:border-white/60"
-                  : "bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-400"
+                ? "bg-white/15 border border-white/35 text-white placeholder:text-white/70 focus:bg-white/25 focus:border-white/60"
+                : "bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-400"
                 }`}
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -520,8 +520,8 @@ export function RouteFinder() {
                   setPointPickingMode(pointPickingMode === "destination" ? null : "destination");
                 }}
                 className={`p-1.5 rounded-lg text-xs font-bold transition-all ${pointPickingMode === "destination"
-                    ? "bg-red-500 text-white shadow-md ring-2 ring-red-300"
-                    : isSatellite ? "text-white/80 hover:text-white hover:bg-white/20" : "text-slate-400 hover:text-slate-800 hover:bg-slate-200"
+                  ? "bg-red-500 text-white shadow-md ring-2 ring-red-300"
+                  : isSatellite ? "text-white/80 hover:text-white hover:bg-white/20" : "text-slate-400 hover:text-slate-800 hover:bg-slate-200"
                   }`}
                 title="Click on map to set Destination (B)"
               >
@@ -555,8 +555,8 @@ export function RouteFinder() {
                 type="button"
                 onClick={() => handleModeChange(mode)}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${active
-                    ? isSatellite ? "bg-white text-slate-950 shadow-md font-extrabold" : "bg-white text-slate-900 shadow-sm border border-slate-200 font-extrabold"
-                    : isSatellite ? "text-white hover:bg-white/20" : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                  ? isSatellite ? "bg-white text-slate-950 shadow-md font-extrabold" : "bg-white text-slate-900 shadow-sm border border-slate-200 font-extrabold"
+                  : isSatellite ? "text-white hover:bg-white/20" : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
                   }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -573,8 +573,8 @@ export function RouteFinder() {
             onClick={() => handleCalculateRoutes()}
             disabled={isCalculatingRoutes || (!originText.trim() && !origin) || (!destText.trim() && !destination)}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md ${isSatellite
-                ? "bg-white hover:bg-white/90 text-slate-950 font-extrabold shadow-lg"
-                : "bg-slate-900 hover:bg-slate-800 text-white"
+              ? "bg-white hover:bg-white/90 text-slate-950 font-extrabold shadow-lg"
+              : "bg-slate-900 hover:bg-slate-800 text-white"
               } disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             {isCalculatingRoutes ? (
@@ -595,8 +595,8 @@ export function RouteFinder() {
               type="button"
               onClick={handleClearRoute}
               className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 shrink-0 ${isSatellite
-                  ? "bg-white/15 hover:bg-white/25 text-white border-white/35"
-                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                ? "bg-white/15 hover:bg-white/25 text-white border-white/35"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
                 }`}
               title="Clear active route & reset map"
             >
@@ -618,8 +618,8 @@ export function RouteFinder() {
                   key={bookmark.id}
                   onClick={() => handleApplyBookmark(bookmark)}
                   className={`w-full text-left px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all flex items-center justify-between border cursor-pointer ${isSatellite
-                      ? "bg-amber-500/15 hover:bg-amber-500/25 text-white border-amber-400/40"
-                      : "bg-amber-50/70 hover:bg-amber-100 text-slate-800 border-amber-200"
+                    ? "bg-amber-500/15 hover:bg-amber-500/25 text-white border-amber-400/40"
+                    : "bg-amber-50/70 hover:bg-amber-100 text-slate-800 border-amber-200"
                     }`}
                 >
                   <div className="truncate pr-2">
@@ -657,8 +657,8 @@ export function RouteFinder() {
                 type="button"
                 onClick={() => handleApplyCorridor(corridor)}
                 className={`w-full text-left px-3 py-2 rounded-xl text-[11px] font-semibold transition-all flex items-center justify-between border ${isSatellite
-                    ? "bg-white/10 hover:bg-white/20 text-white border-white/25"
-                    : "bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200"
+                  ? "bg-white/10 hover:bg-white/20 text-white border-white/25"
+                  : "bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200"
                   }`}
               >
                 <span className="truncate">{corridor.name}</span>
@@ -687,8 +687,8 @@ export function RouteFinder() {
               <div
                 onClick={() => setSelectedRouteId("fastest")}
                 className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 ${selectedRouteId === "fastest"
-                    ? "bg-amber-500/20 border-amber-400 ring-2 ring-amber-400 shadow-md"
-                    : isSatellite ? "bg-white/10 border-white/20 hover:bg-white/15 opacity-80" : "bg-slate-50 border-slate-200 hover:bg-slate-100 opacity-80"
+                  ? "bg-amber-500/20 border-amber-400 ring-2 ring-amber-400 shadow-md"
+                  : isSatellite ? "bg-white/10 border-white/20 hover:bg-white/15 opacity-80" : "bg-slate-50 border-slate-200 hover:bg-slate-100 opacity-80"
                   }`}
               >
                 <div className="flex items-center justify-between text-[10px] font-mono font-bold">
@@ -741,8 +741,8 @@ export function RouteFinder() {
               <div
                 onClick={() => setSelectedRouteId("cool")}
                 className={`p-3 rounded-xl border cursor-pointer transition-all duration-200 ${selectedRouteId === "cool"
-                    ? "bg-emerald-500/20 border-emerald-400 ring-2 ring-emerald-400 shadow-md"
-                    : isSatellite ? "bg-white/10 border-white/20 hover:bg-white/15 opacity-80" : "bg-slate-50 border-slate-200 hover:bg-slate-100 opacity-80"
+                  ? "bg-emerald-500/20 border-emerald-400 ring-2 ring-emerald-400 shadow-md"
+                  : isSatellite ? "bg-white/10 border-white/20 hover:bg-white/15 opacity-80" : "bg-slate-50 border-slate-200 hover:bg-slate-100 opacity-80"
                   }`}
               >
                 <div className="flex items-center justify-between text-[10px] font-mono font-bold text-emerald-400">
@@ -923,8 +923,8 @@ export function RouteFinder() {
                 type="button"
                 onClick={() => setIsReportModalOpen(true)}
                 className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm ${isSatellite
-                    ? "bg-white text-slate-950 hover:bg-white/90 font-extrabold"
-                    : "bg-slate-900 hover:bg-slate-800 text-white"
+                  ? "bg-white text-slate-950 hover:bg-white/90 font-extrabold"
+                  : "bg-slate-900 hover:bg-slate-800 text-white"
                   }`}
               >
                 <FileText className="w-3.5 h-3.5" />
@@ -935,10 +935,10 @@ export function RouteFinder() {
                 type="button"
                 onClick={handleSaveBookmark}
                 className={`px-3 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all ${isBookmarkSaved
-                    ? "bg-emerald-500 text-white border-emerald-400"
-                    : isSatellite
-                      ? "bg-white/15 hover:bg-white/25 text-white border-white/30"
-                      : "bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300"
+                  ? "bg-emerald-500 text-white border-emerald-400"
+                  : isSatellite
+                    ? "bg-white/15 hover:bg-white/25 text-white border-white/30"
+                    : "bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300"
                   }`}
                 title="Save Corridor to Bookmarks"
               >

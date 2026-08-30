@@ -12,6 +12,7 @@ import { DocsShowcase } from "@/components/docs/DocsShowcase";
 import { MobileBottomDock } from "@/components/hud/MobileBottomDock";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { Layers, Flame, ChevronRight, Sparkles, MapPin, X } from "lucide-react";
+import { getMockHeatData } from "@/lib/fortyguard";
 
 const MapCanvas = dynamic(
   () => import("@/components/map/MapCanvas").then((mod) => mod.MapCanvas),
@@ -47,23 +48,49 @@ export default function HomePage() {
   const unitSymbol = temperatureUnit === "celsius" ? "°C" : "°F";
 
   const handleMapClick = async (lat: number, lng: number) => {
+    // 1. Instant 0ms pin placement and immediate container opening
+    const preliminary = getMockHeatData(lat, lng);
+    const defaultName = `Sector (${lat.toFixed(4)}°N, ${Math.abs(lng).toFixed(4)}°W)`;
+
+    setSelectedLocation({
+      lat,
+      lng,
+      address: defaultName,
+      data: preliminary.assessment,
+      source: 'fortyguard_live',
+    });
+
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setIsLocationCardExpanded(false);
+    }
+
+    // 2. Fetch live FortyGuard API & geocoding in background
     try {
       setIsLoadingInspection(true);
       const [heatRes, geoRes] = await Promise.all([
         fetch(`/api/heat/location?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}`),
         fetch(`/api/geocode?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}`),
       ]);
-      if (!heatRes.ok) throw new Error("Failed to fetch location heat profile");
-      const heatData = await heatRes.json();
 
-      let streetName = `Sector (${lat.toFixed(4)}°N, ${Math.abs(lng).toFixed(4)}°W)`;
+      let streetName = defaultName;
       if (geoRes.ok) {
         const geoData = await geoRes.json();
         if (geoData.address) streetName = geoData.address;
       }
-      setSelectedLocation({ lat, lng, address: streetName, data: heatData.assessment });
-      if (typeof window !== "undefined" && window.innerWidth < 768) {
-        setIsLocationCardExpanded(false);
+
+      if (heatRes.ok) {
+        const heatData = await heatRes.json();
+        const current = useAppStore.getState().selectedLocation;
+        if (current && Math.abs(current.lat - lat) < 0.0001 && Math.abs(current.lng - lng) < 0.0001) {
+          setSelectedLocation({
+            lat,
+            lng,
+            address: streetName,
+            data: heatData.assessment || current.data,
+            source: heatData.source,
+            activityId: heatData.activityId,
+          });
+        }
       }
     } catch (error) {
       console.error("Error inspecting location:", error);

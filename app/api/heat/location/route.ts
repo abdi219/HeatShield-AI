@@ -32,12 +32,14 @@ export async function GET(request: NextRequest) {
         success: true,
         point: result.point,
         assessment: result.assessment,
+        activityId: (result as any).activityId,
+        source: (result as any).source || result.point.source,
       },
       {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "no-store, no-cache, must-revalidate",
+          "Cache-Control": "public, s-maxage=600, stale-while-revalidate=1800",
         },
       }
     );

@@ -58,6 +58,8 @@ interface AppState {
     lng: number;
     address?: string;
     data: HeatRiskAssessment | null;
+    source?: string;
+    activityId?: string;
   } | null;
   setSelectedLocation: (loc: AppState['selectedLocation']) => void;
 

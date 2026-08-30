@@ -191,10 +191,10 @@ function generateOrthogonalGridRoute(
   isCool: boolean
 ): [number, number][] {
   const coords: [number, number][] = [];
-  
+
   // Follow cardinal street grid lines: horizontal first or vertical first along street grid
   coords.push([origin.lng, origin.lat]);
-  
+
   if (isCool) {
     // 2-corner street detour along parallel avenue
     const offsetLng = (destination.lng - origin.lng) * 0.15;
@@ -209,7 +209,7 @@ function generateOrthogonalGridRoute(
     // Direct Manhattan L-turn along cardinal street grid
     coords.push([destination.lng, origin.lat]);
   }
-  
+
   coords.push([destination.lng, destination.lat]);
 
   return densifyPolyline(coords, 35);
@@ -248,10 +248,10 @@ async function fetchOsrmRoutes(
     const profile = mode === 'walking' ? 'foot' : mode === 'cycling' ? 'bike' : 'driving';
     const candidateMap = new Map<string, { coords: [number, number][]; steps: any[] }>();
     let fastestRoute: { coords: [number, number][]; steps: any[] } | null = null;
-    
+
     // 1. Direct Fastest Route + Natural Alternatives from OSRM
     const directUrl = `https://router.project-osrm.org/route/v1/${profile}/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson&steps=true&alternatives=3`;
-    
+
     try {
       const res = await fetch(directUrl, { next: { revalidate: 3600 } });
       if (res.ok) {
@@ -302,7 +302,7 @@ async function fetchOsrmRoutes(
                   const directDist = fastestRoute ? fastestRoute.coords.length : coords.length;
                   const detourRatio = coords.length / Math.max(1, directDist);
                   const maxDetour = mode === 'driving' ? 1.45 : 1.35;
-                  
+
                   if (!hasBacktrackingLoop(coords) && detourRatio <= maxDetour) {
                     const allSteps: any[] = [];
                     if (r.legs) {
@@ -358,7 +358,7 @@ function buildThermalSteps(
       const street = s.name || (idx === 0 ? originName : idx === rawSteps.length - 1 ? destName : `Corridor Segment ${idx + 1}`);
       const maneuverType = s.maneuver?.type || "turn";
       const modifier = s.maneuver?.modifier ? ` ${s.maneuver.modifier}` : "";
-      
+
       let instruction = `${maneuverType.charAt(0).toUpperCase() + maneuverType.slice(1)}${modifier} onto ${street}`;
       if (idx === 0) instruction = `Depart from ${originName} on ${street}`;
       if (idx === rawSteps.length - 1) instruction = `Arrive at ${destName}`;
@@ -508,7 +508,7 @@ export async function analyzeRoutes(
 
   if (distinctCandidates.length > 0) {
     let bestThermalScore = -Infinity;
-    
+
     for (const cand of distinctCandidates) {
       const candThermal = sampleThermalProfile(cand.coords, speed);
       const candDist = candThermal.totalDistance;
@@ -521,7 +521,7 @@ export async function analyzeRoutes(
       const peakSavings = fastestThermal.peakTemp - candThermal.peakTemp;
       const shadeBonus = candThermal.shadedPct * 0.1;
       const detourPenalty = (detourRatio - 1.0) * 15;
-      
+
       const candidateScore = (tempSavings * 50) + (peakSavings * 25) + shadeBonus - detourPenalty;
 
       if (candidateScore > bestThermalScore && (tempSavings >= 0 || candThermal.shadedPct > fastestThermal.shadedPct + 10)) {
@@ -548,7 +548,7 @@ export async function analyzeRoutes(
 
   if (isDistinct && (rawTempDiff > 0.1 || coolThermal.shadedPct > fastestThermal.shadedPct)) {
     finalName = "HeatShield Recommended (Shaded Corridor)";
-    
+
     // Physical heat exposure reduction formula based on excess thermal load and canopy shade
     const relativeHeatDiff = rawTempDiff / Math.max(2.0, fastestThermal.avgTemp - 24.0);
     const shadeDeltaPct = (coolThermal.shadedPct - fastestThermal.shadedPct) / 100;

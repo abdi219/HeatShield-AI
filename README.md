@@ -68,7 +68,7 @@ The HeatShield AI platform was built during the FortyGuard Hackathon 2026 sprint
 ## Interactive Feature Showcase
 
 ### 1. Live Street-Level Microclimate Heatmap
-High-density continuous thermal gradient canvas supporting both Street and Satellite views across 4 pilot metropolitan areas (Phoenix, Miami, Austin, and Las Vegas, plus Dubai).
+High-density continuous thermal gradient canvas supporting both Street and Satellite views across 4 pilot metropolitan areas (Phoenix, Miami, Austin, and Las Vegas).
 
 ![Live Microclimate Heatmap](./docs/screenshots/heatmap.png)
 
@@ -247,68 +247,97 @@ Content-Type: application/json
 ```json
 {
   "polygon_aoi": {
-    "type": "Polygon",
-    "coordinates": [
-      [
-        [-112.0840, 33.4384],
-        [-112.0640, 33.4384],
-        [-112.0640, 33.4584],
-        [-112.0840, 33.4584],
-        [-112.0840, 33.4384]
-      ]
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [-112.0780, 33.4440],
+              [-112.0700, 33.4440],
+              [-112.0700, 33.4520],
+              [-112.0780, 33.4520],
+              [-112.0780, 33.4440]
+            ]
+          ]
+        }
+      }
     ]
   },
   "date_time": {
-    "start_date": "2026-08-25",
-    "filter_type": 1
-  }
+    "start_date": "2026-08-30",
+    "filter_type": 3
+  },
+  "granularity": 100
 }
 ```
 
 ### 2. Real FortyGuard API Output Response
 
-**Response Payload:**
+**Response Payload (`GET https://api.fortyguard.com/v1/status/2817f114-0b11-4122-9a60-56ebaf385432`):**
 ```json
 {
-  "status": "Completed",
-  "activity_id": "act_fg_20260825_phx_98234",
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-112.0740, 33.4484]
-      },
-      "properties": {
-        "id": "fg-33.4484--112.0740",
-        "surface_temperature": 39.8,
-        "air_temperature": 31.2,
-        "relative_humidity": 18.5,
-        "canopy_coverage": 14.0,
-        "albedo_factor": 0.12,
-        "timestamp": "2026-08-25T14:30:00Z",
-        "source": "fortyguard_live"
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [-112.0742, 33.4533]
-      },
-      "properties": {
-        "id": "fg-33.4533--112.0742",
-        "surface_temperature": 27.4,
-        "air_temperature": 29.8,
-        "relative_humidity": 24.0,
-        "canopy_coverage": 68.0,
-        "albedo_factor": 0.35,
-        "timestamp": "2026-08-25T14:30:00Z",
-        "source": "fortyguard_live"
+  "error": false,
+  "status_code": 200,
+  "message": "Completed",
+  "data": {
+    "activity_id": "2817f114-0b11-4122-9a60-56ebaf385432",
+    "status": "Completed",
+    "result": {
+      "map_data": {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "id": "0",
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [-112.0780, 33.4440],
+                  [-112.0740, 33.4440],
+                  [-112.0740, 33.4480],
+                  [-112.0780, 33.4480],
+                  [-112.0780, 33.4440]
+                ]
+              ]
+            },
+            "properties": {
+              "tile_id": 0,
+              "average_temperature": 36.1695,
+              "min_temperature": 32.2382,
+              "max_temperature": 40.7000
+            }
+          },
+          {
+            "id": "1",
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [-112.0740, 33.4480],
+                  [-112.0700, 33.4480],
+                  [-112.0700, 33.4520],
+                  [-112.0740, 33.4520],
+                  [-112.0740, 33.4480]
+                ]
+              ]
+            },
+            "properties": {
+              "tile_id": 1,
+              "average_temperature": 34.8210,
+              "min_temperature": 30.1500,
+              "max_temperature": 38.9400
+            }
+          }
+        ]
       }
     }
-  ]
+  }
 }
 ```
 
@@ -337,7 +366,8 @@ HeatShield-AI/
 │   ├── api/                      # Serverless API routes (isolated private keys)
 │   │   ├── ai/chat/route.ts      # Groq AI spatial copilot endpoint
 │   │   ├── geocode/route.ts      # Reverse geocoding proxy
-│   │   └── heatmap/route.ts      # FortyGuard spatial grid aggregation
+│   │   ├── heat/grid/route.ts    # FortyGuard spatial grid aggregation
+│   │   └── heat/location/route.ts# FortyGuard microclimate telemetry point query
 │   ├── globals.css               # Global glassmorphic theme & Leaflet overrides
 │   ├── layout.tsx                # App root layout with SEO meta & fonts
 │   ├── not-found.tsx             # 404 error page matching dark glass theme
@@ -501,5 +531,4 @@ The HeatShield AI platform is built using a modern, type-safe full-stack archite
 * **Track:** Track 1 — Resilient Cities & Infrastructure
 * **Live Deployment URL:** [Insert Vercel URL Here]
 * **Demo Video:** [Insert Video URL Here]
-* **Presentation Deck:** Available locally at [`presentation.html`](./presentation.html)
 * **License:** MIT License

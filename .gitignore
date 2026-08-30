@@ -35,4 +35,7 @@ next-env.d.ts
 # Scratch directory
 /scratch/
 
+# Local presentations / drafts
+presentation.html
+
 

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useAppStore } from "@/lib/store";
-import { getMockHeatGrid } from "@/lib/fortyguard";
+import { getMockHeatGrid, getMockHeatData } from "@/lib/fortyguard";
 import { Plus, Minus, X } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -776,40 +776,20 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
       if (mouseMoveThrottleId) return;
       mouseMoveThrottleId = window.requestAnimationFrame(() => {
         mouseMoveThrottleId = null;
-        const geojson = rawGridDataRef.current;
-        if (!geojson || !geojson.features || geojson.features.length === 0) {
-          setHoverTelemetry(null);
-          return;
-        }
 
         const curLat = e.latlng.lat;
         const curLng = e.latlng.lng;
 
-        let nearest: any = null;
-        let minDist = Infinity;
+        // Exact continuous microclimate telemetry matching the clicked location calculation
+        const { point, assessment } = getMockHeatData(curLat, curLng);
 
-        for (let i = 0; i < geojson.features.length; i++) {
-          const f = geojson.features[i];
-          if (f.geometry.type !== "Point") continue;
-          const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates;
-          const dist = Math.hypot(curLat - lat, curLng - lng);
-          if (dist < minDist) {
-            minDist = dist;
-            nearest = f;
-          }
-        }
-
-        if (nearest && minDist < 0.02) {
-          setHoverTelemetry({
-            x: e.containerPoint.x,
-            y: e.containerPoint.y,
-            temp: nearest.properties?.surfaceTemp ?? 34.5,
-            score: nearest.properties?.hrsScore ?? 50,
-            level: nearest.properties?.hrsLevel ?? "moderate",
-          });
-        } else {
-          setHoverTelemetry(null);
-        }
+        setHoverTelemetry({
+          x: e.containerPoint.x,
+          y: e.containerPoint.y,
+          temp: point.surfaceTempCelsius,
+          score: assessment.score,
+          level: assessment.level,
+        });
       });
     });
 
@@ -930,11 +910,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
 
       {/* Point Picking Mode Hint Banner */}
       {pointPickingMode && (
-        <div className={`fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-[1100] w-[calc(100vw-2rem)] sm:w-auto max-w-sm sm:max-w-md px-4 py-2 rounded-2xl sm:rounded-full shadow-2xl flex items-center justify-between sm:justify-center gap-3 border backdrop-blur-xl animate-in fade-in slide-in-from-top-2 ${
-          isSatellite
-            ? "sat-glass text-white border-white/35 shadow-black/40"
-            : "street-card text-slate-900 border-slate-200/90 shadow-xl"
-        }`}>
+        <div className={`fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-[1100] w-[calc(100vw-2rem)] sm:w-auto max-w-sm sm:max-w-md px-4 py-2 rounded-2xl sm:rounded-full shadow-2xl flex items-center justify-between sm:justify-center gap-3 border backdrop-blur-xl animate-in fade-in slide-in-from-top-2 ${isSatellite
+          ? "sat-glass text-white border-white/35 shadow-black/40"
+          : "street-card text-slate-900 border-slate-200/90 shadow-xl"
+          }`}>
           <div className="flex items-center gap-2 min-w-0">
             <span className={`w-2.5 h-2.5 rounded-full shrink-0 animate-ping ${pointPickingMode === "origin" ? "bg-emerald-400" : "bg-rose-500"}`} />
             <span className={`text-xs font-semibold truncate ${isSatellite ? "text-white" : "text-slate-900"}`}>
@@ -952,11 +931,10 @@ export const MapCanvas: React.FC<MapCanvasProps> = ({ onLocationSelect }) => {
           <button
             type="button"
             onClick={() => setPointPickingMode(null)}
-            className={`px-3 py-1 text-[11px] font-mono font-bold rounded-xl sm:rounded-full border shrink-0 transition-all ml-1.5 flex items-center gap-1.5 ${
-              isSatellite
-                ? "bg-white/15 hover:bg-white/30 text-white border-white/30 shadow-sm"
-                : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 shadow-sm"
-            }`}
+            className={`px-3 py-1 text-[11px] font-mono font-bold rounded-xl sm:rounded-full border shrink-0 transition-all ml-1.5 flex items-center gap-1.5 ${isSatellite
+              ? "bg-white/15 hover:bg-white/30 text-white border-white/30 shadow-sm"
+              : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 shadow-sm"
+              }`}
           >
             <span>Cancel</span>
             <X className="w-3 h-3" />
