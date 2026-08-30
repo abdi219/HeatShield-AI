@@ -530,6 +530,6 @@ The HeatShield AI platform is built using a modern, type-safe full-stack archite
 
 * **Event:** FortyGuard Hackathon 2026
 * **Track:** Track 1 — Resilient Cities & Infrastructure
-* **Live Deployment URL:** [[Insert Vercel URL Here](https://heat-shield-ai-five.vercel.app/)]
-* **Demo Video:** [[Insert Video URL Here](https://youtu.be/8WlZwB4HxQg?si=w-OLV6EnFdcZrmSu)]
+* **Live Deployment URL:** [View Live App](https://heat-shield-ai-five.vercel.app/)
+* **Demo Video:** [Watch on YouTube](https://youtu.be/8WlZwB4HxQg?si=w-OLV6EnFdcZrmSu)
 * **License:** MIT License
